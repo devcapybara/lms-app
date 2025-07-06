@@ -514,6 +514,15 @@ export default function CourseDetail() {
                 </div>
               </div>
             </div>
+            {hasRole && (hasRole('admin') || hasRole('teacher')) && (
+              <button
+                onClick={() => navigate(`/courses/${course._id}/lessons`)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
+              >
+                <BookOpen className="h-4 w-4" />
+                <span>Kelola Pelajaran</span>
+              </button>
+            )}
           </div>
         </div>
 

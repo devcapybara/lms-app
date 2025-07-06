@@ -16,6 +16,7 @@ import CreateCourse from './pages/CreateCourse';
 import EditCourse from './pages/EditCourse';
 import Users from './pages/Users';
 import AdminUsers from './pages/AdminUsers';
+import LessonManagement from './pages/LessonManagement';
 
 function App() {
   return (
@@ -74,6 +75,11 @@ function App() {
           <Route path="admin/users" element={
             <PrivateRoute allowedRoles={['admin']}>
               <AdminUsers />
+            </PrivateRoute>
+          } />
+          <Route path="courses/:courseId/lessons" element={
+            <PrivateRoute allowedRoles={['teacher', 'admin']}>
+              <LessonManagement />
             </PrivateRoute>
           } />
         </Route>

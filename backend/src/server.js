@@ -13,6 +13,7 @@ const courseRoutes = require('./routes/courses');
 const lessonRoutes = require('./routes/lessons');
 const assessmentRoutes = require('./routes/assessments');
 const enrollmentsRouter = require('./routes/enrollments');
+const uploadRoutes = require('./routes/upload');
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/lessons', lessonRoutes);
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api/enrollments', enrollmentsRouter);
+app.use('/api/upload', uploadRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

@@ -116,4 +116,11 @@ jspm_packages/
 
 # Temporary folders
 tmp/
-temp/ 
+temp/
+
+# Local database files (using MongoDB Atlas now)
+data/
+data/db/
+
+# Upload files (handled by backend/.gitignore)
+uploads/ 

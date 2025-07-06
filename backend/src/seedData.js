@@ -2,9 +2,13 @@ const mongoose = require('mongoose');
 const User = require('./models/User');
 const Course = require('./models/Course');
 const Enrollment = require('./models/Enrollment');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/lms-app', {
+console.log('MONGODB_URI:', process.env.MONGODB_URI);
+mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });

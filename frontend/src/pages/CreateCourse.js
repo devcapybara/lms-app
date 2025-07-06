@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { courseAPI } from '../utils/api';
+import ImageUpload from '../components/ImageUpload';
 import { 
   BookOpen, 
   FileText, 
@@ -340,33 +341,28 @@ export default function CreateCourse() {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Price (IDR) *
-          </label>
-          <input
-            type="number"
-            value={formData.price}
-            onChange={(e) => handleCourseInfoChange('price', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="299000"
-            required
-          />
-        </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Price (IDR) *
+        </label>
+        <input
+          type="number"
+          value={formData.price}
+          onChange={(e) => handleCourseInfoChange('price', e.target.value)}
+          className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="299000"
+          required
+        />
+      </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Cover Image URL
-          </label>
-          <input
-            type="url"
-            value={formData.image}
-            onChange={(e) => handleCourseInfoChange('image', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="https://example.com/image.jpg"
-          />
-        </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Cover Image
+        </label>
+        <ImageUpload
+          value={formData.image}
+          onChange={(value) => handleCourseInfoChange('image', value)}
+        />
       </div>
     </div>
   );

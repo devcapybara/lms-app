@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../utils/AuthContext';
 import { courseAPI } from '../utils/api';
+import { getImageUrl } from '../utils/imageUtils';
 import { 
   Search, 
   Filter, 
@@ -232,10 +233,20 @@ export default function Courses() {
                 {/* Course Image */}
                 <div className="relative h-48 bg-gray-700">
                   <img
-                    src={course.image}
+                    src={getImageUrl(course.image)}
                     alt={course.title}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
                   />
+                  <div className="hidden absolute inset-0 bg-gray-600 flex items-center justify-center">
+                    <div className="text-center text-gray-400">
+                      <BookOpen className="h-12 w-12 mx-auto mb-2" />
+                      <p className="text-sm">No Image</p>
+                    </div>
+                  </div>
                   <div className="absolute top-3 right-3">
                     <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
                       {course.category}

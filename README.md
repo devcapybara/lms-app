@@ -1,29 +1,30 @@
-# Learning Management System (LMS)
+# Learning Management System (LMS) - Naik Satu Level
 
-Platform pembelajaran online yang memungkinkan instruktur membuat dan mengelola kursus, serta siswa untuk belajar secara fleksibel.
+Platform pembelajaran online yang memungkinkan admin, teacher, dan student untuk berinteraksi dalam sistem pembelajaran yang terstruktur.
 
 ## 🚀 Fitur Utama
 
-### Untuk Siswa
-- ✅ Browse dan enroll kursus
-- ✅ Akses pelajaran dengan konten multimedia
-- ✅ Quiz dan assessment
-- ✅ Progress tracking
-- ✅ Rating dan review kursus
+### Untuk Student
+- ✅ Register dan login dengan email
+- ✅ Browse dan view kursus
 - ✅ Dashboard pembelajaran
+- ✅ Profile management
+- ✅ Progress tracking (dalam pengembangan)
 
-### Untuk Instruktur
+### Untuk Teacher
+- ✅ Login dengan akun yang dibuat admin
 - ✅ Buat dan kelola kursus
 - ✅ Upload konten pelajaran
-- ✅ Buat quiz dan assessment
 - ✅ Monitor progress siswa
-- ✅ Analytics dan insights
+- ✅ Dashboard teacher
 
 ### Untuk Admin
-- ✅ Manajemen user dan role
-- ✅ Moderasi konten
-- ✅ System analytics
+- ✅ Login dengan akun admin
+- ✅ Manajemen user dan role (create teacher/student)
+- ✅ User management interface
+- ✅ Student management interface
 - ✅ Platform management
+- ✅ Full access control
 
 ## 🛠️ Teknologi
 
@@ -39,10 +40,11 @@ Platform pembelajaran online yang memungkinkan instruktur membuat dan mengelola 
 ### Frontend
 - **React 18** - UI library
 - **React Router** - Client-side routing
-- **React Query** - Data fetching
-- **Tailwind CSS** - Styling
+- **Tailwind CSS** - Styling framework
 - **Axios** - HTTP client
-- **React Hook Form** - Form handling
+- **React Context** - State management
+- **Lucide React** - Icons
+- **React Hot Toast** - Notifications
 
 ## 📁 Struktur Proyek
 
@@ -135,52 +137,104 @@ lms-app/
 ## 📖 API Documentation
 
 ### Authentication
-- `POST /api/auth/register` - Register user baru
+- `POST /api/auth/register` - Register student baru (student only)
 - `POST /api/auth/login` - Login user
 - `GET /api/auth/me` - Get current user
 - `POST /api/auth/logout` - Logout
 
+### Admin User Management
+- `POST /api/auth/admin/users` - Create new user (admin only)
+- `GET /api/auth/admin/users` - Get all users (admin only)
+- `PATCH /api/auth/admin/users/:userId/role` - Update user role (admin only)
+
 ### Users
-- `GET /api/users` - Get all users (admin only)
-- `PUT /api/users/profile` - Update profile
-- `PUT /api/users/change-password` - Change password
-- `GET /api/users/enrolled-courses` - Get enrolled courses
+- `GET /api/users/students` - Get all students with enrollment data
+- `GET /api/users/students/:id` - Get student by ID
+- `PUT /api/users/students/:id/enrollments/:courseId/approve` - Approve enrollment
+- `PUT /api/users/students/:id/enrollments/:courseId/reject` - Reject enrollment
 
 ### Courses
 - `GET /api/courses` - Get all published courses
 - `GET /api/courses/:id` - Get course by ID
 - `POST /api/courses` - Create course (teacher/admin)
-- `PUT /api/courses/:id` - Update course (instructor/admin)
-- `DELETE /api/courses/:id` - Delete course (instructor/admin)
-- `POST /api/courses/:id/enroll` - Enroll in course
-- `POST /api/courses/:id/rate` - Rate course
+- `PUT /api/courses/:id` - Update course (teacher/admin)
+- `DELETE /api/courses/:id` - Delete course (teacher/admin)
 
-### Lessons
-- `GET /api/lessons/course/:courseId` - Get lessons by course
-- `GET /api/lessons/:id` - Get lesson by ID
-- `POST /api/lessons` - Create lesson (teacher/admin)
-- `PUT /api/lessons/:id` - Update lesson (instructor/admin)
-- `DELETE /api/lessons/:id` - Delete lesson (instructor/admin)
-- `POST /api/lessons/:id/complete` - Mark lesson as completed
-- `POST /api/lessons/:id/quiz` - Submit quiz
+### Enrollments
+- `POST /api/enrollments` - Enroll in course
+- `GET /api/enrollments/user/:userId` - Get user enrollments
+- `PUT /api/enrollments/:id/status` - Update enrollment status
 
 ## 🔐 Role-based Access Control
 
-- **Student**: Can enroll in courses, view lessons, complete lessons, take quizzes
-- **Teacher**: Can create/edit/delete courses and lessons, view enrolled students
-- **Admin**: Full access to all features, can manage users and courses
+- **Student**: Can register, login, browse courses, view course details, access dashboard
+- **Teacher**: Can login, create/edit/delete courses, manage course content, view student progress
+- **Admin**: Full access to all features, can create/manage users, manage courses, access admin interfaces
+
+## 👥 Default Users (Seed Data)
+
+Setelah menjalankan seed data, tersedia user default:
+
+- **Admin**: `admin@example.com` / `admin123`
+- **Teacher**: `ahmad.digital@example.com` / `teacher123`
+- **Student**: `ahmad@example.com` / `student123`
 
 ## 🎨 UI Components
 
-Aplikasi menggunakan Tailwind CSS dengan custom components:
-- `.btn` - Base button styles
-- `.btn-primary` - Primary button
-- `.btn-secondary` - Secondary button
-- `.btn-danger` - Danger button
-- `.input` - Form input styles
-- `.card` - Card container
-- `.card-header` - Card header
-- `.card-body` - Card body
+Aplikasi menggunakan Tailwind CSS dengan modern dark theme:
+- **Dark Theme**: Gray-900 background dengan glass effect
+- **Responsive Design**: Mobile-first approach
+- **Modern Components**: Cards, buttons, forms dengan hover effects
+- **Icons**: Lucide React icons
+- **Notifications**: React Hot Toast untuk feedback
+
+## 📱 Pages & Routes
+
+### Public Pages
+- `/` - Home page
+- `/login` - Login page
+- `/register` - Student registration
+- `/courses` - Course listing
+
+### Protected Pages
+- `/dashboard` - User dashboard
+- `/profile` - User profile
+- `/courses/:id` - Course detail
+- `/create-course` - Create course (teacher/admin)
+- `/edit-course/:id` - Edit course (teacher/admin)
+
+### Admin Pages
+- `/users` - Student management
+- `/admin/users` - User management (create/edit users)
+
+## 🚀 Quick Start
+
+### 1. Clone Repository
+```bash
+git clone https://github.com/devcapybara/lms-app.git
+cd lms-app
+```
+
+### 2. Setup Backend
+```bash
+cd backend
+npm install
+cp env.example .env
+# Edit .env file dengan konfigurasi database
+npm run seed  # Untuk setup data awal
+npm start
+```
+
+### 3. Setup Frontend
+```bash
+cd frontend
+npm install
+npm start
+```
+
+### 4. Access Application
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:5000
 
 ## 🧪 Testing
 
@@ -195,6 +249,51 @@ npm test
 cd frontend
 npm test
 ```
+
+## ✅ Fitur yang Sudah Selesai
+
+### User Management
+- ✅ User registration (student only)
+- ✅ User authentication & authorization
+- ✅ Role-based access control (Student, Teacher, Admin)
+- ✅ Admin user management interface
+- ✅ User profile management
+- ✅ Password hashing & JWT tokens
+
+### Course Management
+- ✅ Course CRUD operations
+- ✅ Course listing & search
+- ✅ Course detail pages
+- ✅ Course creation by teachers
+- ✅ Course editing & deletion
+
+### Frontend UI/UX
+- ✅ Modern dark theme design
+- ✅ Responsive layout
+- ✅ Navigation & routing
+- ✅ Form validation
+- ✅ Loading states & error handling
+- ✅ Toast notifications
+
+### Security
+- ✅ JWT authentication
+- ✅ Role-based middleware
+- ✅ Input validation
+- ✅ Protected routes
+
+## 🚧 Fitur dalam Pengembangan
+
+### Content Management
+- ⏳ Lesson management (video, PDF, quiz)
+- ⏳ Assessment system
+- ⏳ Progress tracking detail
+- ⏳ Course enrollment system
+
+### Advanced Features
+- ⏳ Level-based curriculum
+- ⏳ Certificate system
+- ⏳ Analytics dashboard
+- ⏳ Notification system
 
 ## 📦 Deployment
 

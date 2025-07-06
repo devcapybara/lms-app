@@ -31,6 +31,7 @@ const Layout = () => {
     // Add admin-specific navigation
     if (hasRole('admin')) {
       navigation.push({ name: 'Students', href: '/users', icon: Users });
+      navigation.push({ name: 'User Management', href: '/admin/users', icon: Users });
     }
   }
 

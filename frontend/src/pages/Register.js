@@ -121,7 +121,6 @@ export default function Register() {
                 className="mt-1 block w-full px-3 py-2 border border-gray-600 text-white bg-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="student">Student (Peserta Kursus)</option>
-                <option value="admin">Admin (Mentor)</option>
               </select>
             </div>
 

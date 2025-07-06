@@ -86,5 +86,38 @@ export const userAPI = {
       console.error('Error updating progress:', error);
       throw error;
     }
+  },
+
+  // Admin: Get all users
+  getAllUsers: async () => {
+    try {
+      const response = await api.get('/auth/admin/users');
+      return response.data.users;
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      throw error;
+    }
+  },
+
+  // Admin: Create new user
+  createUser: async (userData) => {
+    try {
+      const response = await api.post('/auth/admin/users', userData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
+  },
+
+  // Admin: Update user role
+  updateUserRole: async (userId, role) => {
+    try {
+      const response = await api.patch(`/auth/admin/users/${userId}/role`, { role });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      throw error;
+    }
   }
 }; 

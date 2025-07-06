@@ -15,6 +15,7 @@ import Profile from './pages/Profile';
 import CreateCourse from './pages/CreateCourse';
 import EditCourse from './pages/EditCourse';
 import Users from './pages/Users';
+import AdminUsers from './pages/AdminUsers';
 
 function App() {
   return (
@@ -68,6 +69,11 @@ function App() {
           <Route path="users" element={
             <PrivateRoute allowedRoles={['admin']}>
               <Users />
+            </PrivateRoute>
+          } />
+          <Route path="admin/users" element={
+            <PrivateRoute allowedRoles={['admin']}>
+              <AdminUsers />
             </PrivateRoute>
           } />
         </Route>

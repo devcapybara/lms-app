@@ -26,12 +26,12 @@ const seedData = async () => {
       role: 'admin'
     });
 
-    // Create instructor user
-    const instructor = await User.create({
+    // Create teacher user
+    const teacher = await User.create({
       name: 'Ahmad Digital',
       email: 'ahmad.digital@example.com',
-      password: 'instructor123',
-      role: 'admin' // Using admin role for instructor
+      password: 'teacher123',
+      role: 'teacher'
     });
 
     // Create sample students
@@ -69,7 +69,7 @@ const seedData = async () => {
     console.log('Data seeded successfully!');
     console.log(`Created ${students.length} students`);
     console.log('Admin credentials: admin@example.com / admin123');
-    console.log('Instructor credentials: ahmad.digital@example.com / instructor123');
+    console.log('Teacher credentials: ahmad.digital@example.com / teacher123');
     console.log('Student credentials: ahmad@example.com / student123');
 
   } catch (error) {

@@ -172,7 +172,10 @@ router.get('/:id', auth, async (req, res) => {
 // Update user profile
 router.put('/profile', auth, [
   body('name').optional().trim().isLength({ min: 2 }).withMessage('Nama minimal 2 karakter'),
-  body('bio').optional().isLength({ max: 500 }).withMessage('Bio maksimal 500 karakter')
+  body('bio').optional().isLength({ max: 500 }).withMessage('Bio maksimal 500 karakter'),
+  body('contacts').optional().isArray().withMessage('Contacts harus berupa array'),
+  body('cv').optional().isString(),
+  body('photo').optional().isString()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -184,7 +187,7 @@ router.put('/profile', auth, [
     }
 
     const updates = req.body;
-    const allowedUpdates = ['name', 'bio', 'avatar'];
+    const allowedUpdates = ['name', 'bio', 'contacts', 'cv', 'photo'];
     const filteredUpdates = {};
 
     Object.keys(updates).forEach(key => {

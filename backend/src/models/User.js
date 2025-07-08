@@ -21,10 +21,14 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['student', 'teacher', 'admin'],
+    enum: ['student', 'instructor', 'admin'], // ganti 'teacher' jadi 'instructor' agar konsisten
     default: 'student'
   },
-  avatar: {
+  // avatar: {
+  //   type: String,
+  //   default: ''
+  // },
+  photo: {
     type: String,
     default: ''
   },
@@ -32,6 +36,17 @@ const userSchema = new mongoose.Schema({
     type: String,
     maxlength: 500
   },
+  cv: {
+    type: String,
+    default: ''
+  },
+  contacts: [
+    {
+      type: { type: String, default: '' }, // misal: 'linkedin', 'email', 'phone', 'custom'
+      value: { type: String, default: '' },
+      icon: { type: String, default: '' } // nama/icon string, misal 'linkedin', 'envelope', 'phone', 'github', dsb
+    }
+  ],
   enrolledCourses: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Course'

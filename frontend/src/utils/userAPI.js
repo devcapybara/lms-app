@@ -119,5 +119,31 @@ export const userAPI = {
       console.error('Error updating user role:', error);
       throw error;
     }
+  },
+
+  // Upload CV
+  uploadCV: async (file) => {
+    const formData = new FormData();
+    formData.append('cv', file);
+    const response = await api.post('/upload/cv', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
+
+  // Upload Photo
+  uploadPhoto: async (file) => {
+    const formData = new FormData();
+    formData.append('photo', file);
+    const response = await api.post('/upload/photo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
+
+  // Update Profile
+  updateProfile: async (profileData) => {
+    const response = await api.put('/users/profile', profileData);
+    return response.data;
   }
 }; 

@@ -22,7 +22,9 @@ Di folder `backend/`, buat file `.env` dengan konten berikut:
 
 ```env
 # Database Configuration untuk MongoDB Atlas
-MONGODB_URI=mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/lms-app?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-url>/<dbname>?retryWrites=true&w=majority
+
+> Catatan: Simpan URI ini hanya di file `.env` dan jangan pernah commit file `.env` ke repository.
 
 # JWT Configuration
 JWT_SECRET=your-super-secret-jwt-key-here-change-this-in-production

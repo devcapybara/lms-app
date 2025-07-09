@@ -5,6 +5,7 @@ const fs = require('fs');
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, '../../uploads');
 const courseImagesDir = path.join(uploadsDir, 'course-images');
+const lessonMaterialsDir = path.join(uploadsDir, 'lesson-materials');
 
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
@@ -12,9 +13,12 @@ if (!fs.existsSync(uploadsDir)) {
 if (!fs.existsSync(courseImagesDir)) {
   fs.mkdirSync(courseImagesDir, { recursive: true });
 }
+if (!fs.existsSync(lessonMaterialsDir)) {
+  fs.mkdirSync(lessonMaterialsDir, { recursive: true });
+}
 
-// Configure storage
-const storage = multer.diskStorage({
+// Configure storage for course images
+const courseImageStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, courseImagesDir);
   },
@@ -26,34 +30,82 @@ const storage = multer.diskStorage({
   }
 });
 
-// File filter function
-const fileFilter = (req, file, cb) => {
+// Configure storage for lesson materials
+const lessonMaterialStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, lessonMaterialsDir);
+  },
+  filename: function (req, file, cb) {
+    // Generate unique filename with timestamp
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, 'lesson-' + uniqueSuffix + ext);
+  }
+});
+
+// File filter for course images
+const courseImageFilter = (req, file, cb) => {
   // Check file type
   if (file.mimetype.startsWith('image/')) {
     cb(null, true);
   } else {
-    cb(new Error('Only image files are allowed!'), false);
+    cb(new Error('Only image files are allowed for course thumbnails!'), false);
   }
 };
 
-// Configure multer
-const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter,
+// File filter for lesson materials
+const lessonMaterialFilter = (req, file, cb) => {
+  // Allow PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT
+  const allowedMimeTypes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'text/plain',
+    'image/jpeg',
+    'image/png',
+    'image/gif'
+  ];
+  
+  if (allowedMimeTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('File type not allowed. Allowed types: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, Images'), false);
+  }
+};
+
+// Configure multer for course images
+const uploadCourseImage = multer({
+  storage: courseImageStorage,
+  fileFilter: courseImageFilter,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
   }
-});
+}).single('courseImage');
 
-// Middleware for single image upload
-const uploadCourseImage = upload.single('courseImage');
+// Configure multer for lesson materials
+const uploadLessonMaterial = multer({
+  storage: lessonMaterialStorage,
+  fileFilter: lessonMaterialFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit for documents
+  }
+}).array('lessonMaterials', 5); // Allow up to 5 files
 
 // Error handling middleware
 const handleUploadError = (err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({ 
-        message: 'File too large. Maximum size is 5MB.' 
+        message: 'File too large. Maximum size is 10MB for lesson materials and 5MB for images.' 
+      });
+    }
+    if (err.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({ 
+        message: 'Too many files. Maximum 5 files allowed per lesson.' 
       });
     }
     return res.status(400).json({ 
@@ -130,5 +182,6 @@ module.exports = {
   uploadCourseImage,
   handleUploadError,
   uploadCv,
-  uploadPhoto
+  uploadPhoto,
+  uploadLessonMaterial
 }; 

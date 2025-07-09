@@ -60,7 +60,7 @@ router.get('/:id', auth, async (req, res) => {
 });
 
 // Create assessment (instructor only)
-router.post('/', auth, authorize('teacher', 'admin'), [
+router.post('/', auth, authorize('mentor', 'admin'), [
   body('title').trim().isLength({ min: 3, max: 100 }).withMessage('Judul harus 3-100 karakter'),
   body('type').isIn(['pre-test', 'post-test']).withMessage('Tipe assessment tidak valid'),
   body('course').isMongoId().withMessage('ID kursus tidak valid'),

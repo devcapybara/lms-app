@@ -137,7 +137,7 @@ router.post('/admin/users', auth, authorize('admin'), [
   body('name').trim().isLength({ min: 2 }).withMessage('Nama minimal 2 karakter'),
   body('email').isEmail().withMessage('Email tidak valid'),
   body('password').isLength({ min: 6 }).withMessage('Password minimal 6 karakter'),
-  body('role').isIn(['student', 'teacher', 'admin']).withMessage('Role tidak valid')
+  body('role').isIn(['student', 'mentor', 'admin']).withMessage('Role tidak valid')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -191,7 +191,7 @@ router.get('/admin/users', auth, authorize('admin'), async (req, res) => {
 
 // Admin update user role (only admin can access)
 router.patch('/admin/users/:userId/role', auth, authorize('admin'), [
-  body('role').isIn(['student', 'teacher', 'admin']).withMessage('Role tidak valid')
+  body('role').isIn(['student', 'mentor', 'admin']).withMessage('Role tidak valid')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);

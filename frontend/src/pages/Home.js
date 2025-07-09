@@ -118,7 +118,7 @@ const Home = () => {
             <div className="card">
               <div className="card-body">
                 <div className="text-3xl font-bold text-gradient mb-2">15+</div>
-                <div className="text-gray-400">Expert Instructor</div>
+                <div className="text-gray-400">Expert Mentor</div>
               </div>
             </div>
             <div className="card">

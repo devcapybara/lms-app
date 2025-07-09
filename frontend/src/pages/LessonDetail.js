@@ -9,7 +9,11 @@ import {
   Video,
   Clock,
   BookOpen,
-  AlertCircle
+  AlertCircle,
+  Image,
+  File,
+  Download,
+  Eye
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { lessonAPI } from '../utils/api';
@@ -91,6 +95,45 @@ export default function LessonDetail() {
     return lesson.quiz.questions.length === Object.keys(quizAnswers).length;
   };
 
+  // File helper functions
+  const getFileIcon = (filename) => {
+    const ext = filename.split('.').pop().toLowerCase();
+    
+    switch (ext) {
+      case 'pdf':
+        return <FileText className="h-5 w-5 text-red-500" />;
+      case 'doc':
+      case 'docx':
+        return <FileText className="h-5 w-5 text-blue-500" />;
+      case 'ppt':
+      case 'pptx':
+        return <FileText className="h-5 w-5 text-orange-500" />;
+      case 'xls':
+      case 'xlsx':
+        return <FileText className="h-5 w-5 text-green-500" />;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+        return <Image className="h-5 w-5 text-purple-500" />;
+      default:
+        return <File className="h-5 w-5 text-gray-500" />;
+    }
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const canPreview = (filename) => {
+    const ext = filename.split('.').pop().toLowerCase();
+    return ['pdf', 'jpg', 'jpeg', 'png', 'gif'].includes(ext);
+  };
+
   const renderContent = () => {
     if (!lesson) return null;
 
@@ -151,6 +194,59 @@ export default function LessonDetail() {
             dangerouslySetInnerHTML={{ __html: lesson.content }}
           />
         </div>
+
+        {/* Attachments Section */}
+        {lesson.attachments && lesson.attachments.length > 0 && (
+          <div className="bg-gray-800 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-white mb-4 flex items-center space-x-2">
+              <FileText className="h-5 w-5" />
+              <span>Materi Tambahan</span>
+            </h3>
+            <div className="space-y-3">
+              {lesson.attachments.map((attachment, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-gray-700 rounded-lg border border-gray-600"
+                >
+                  <div className="flex items-center space-x-3">
+                    {getFileIcon(attachment.filename)}
+                    <div>
+                      <p className="text-sm font-medium text-white">
+                        {attachment.originalName}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {formatFileSize(attachment.size)}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    {canPreview(attachment.filename) && (
+                      <a
+                        href={`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/upload/lesson-materials/${attachment.filename}/preview`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1 text-blue-500 hover:text-blue-400"
+                        title="Preview"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </a>
+                    )}
+                    
+                    <a
+                      href={`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/upload/lesson-materials/${attachment.filename}`}
+                      download
+                      className="p-1 text-green-500 hover:text-green-400"
+                      title="Download"
+                    >
+                      <Download className="h-4 w-4" />
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Resources */}
         {lesson.resources && lesson.resources.length > 0 && (

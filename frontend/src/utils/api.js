@@ -79,6 +79,7 @@ export const courseAPI = {
   updateEnrollmentStatus: (enrollmentId, status) => api.patch(`/enrollments/${enrollmentId}/status`, { status }),
   updateEnrollmentProgress: (enrollmentId, data) => api.patch(`/enrollments/${enrollmentId}/progress`, data),
   getMyEnrollments: () => api.get('/enrollments/me'),
+  getMyCourses: () => api.get('/users/created-courses'),
 };
 
 // Lesson API
@@ -102,6 +103,66 @@ export const assessmentAPI = {
   delete: (id) => api.delete(`/assessments/${id}`),
   submit: (id, data) => api.post(`/assessments/${id}/submit`, data),
   getAttempts: (id) => api.get(`/assessments/${id}/attempts`),
+};
+
+// Upload API
+export const uploadAPI = {
+  // Upload course image
+  uploadCourseImage: (formData) => {
+    return axios.post(`${API_BASE_URL}/upload/course-image`, formData, {
+      headers: {
+        Authorization: 'Bearer ' + localStorage.getItem('token')
+      }
+    });
+  },
+
+  // Upload lesson materials
+  uploadLessonMaterials: (formData) => {
+    return axios.post(`${API_BASE_URL}/upload/lesson-materials`, formData, {
+      headers: {
+        Authorization: 'Bearer ' + localStorage.getItem('token')
+      }
+    });
+  },
+
+  // Upload user CV
+  uploadCV: (formData) => {
+    return axios.post(`${API_BASE_URL}/upload/cv`, formData, {
+      headers: {
+        Authorization: 'Bearer ' + localStorage.getItem('token')
+      }
+    });
+  },
+
+  // Upload user photo
+  uploadPhoto: (formData) => {
+    return axios.post(`${API_BASE_URL}/upload/photo`, formData, {
+      headers: {
+        Authorization: 'Bearer ' + localStorage.getItem('token')
+      }
+    });
+  },
+
+  // Get file URL
+  getFileUrl: (filename) => `${API_BASE_URL}/upload/lesson-materials/${filename}`,
+  
+  // Get file preview URL
+  getFilePreviewUrl: (filename) => `${API_BASE_URL}/upload/lesson-materials/${filename}/preview`,
+  
+  // Delete file
+  deleteFile: (filename) => api.delete(`/upload/lesson-materials/${filename}`),
+};
+
+// Lesson Attachments API
+export const lessonAttachmentsAPI = {
+  // Add attachments to lesson
+  addAttachments: (lessonId, attachments) => api.post(`/lessons/${lessonId}/attachments`, { attachments }),
+  
+  // Remove attachment from lesson
+  removeAttachment: (lessonId, filename) => api.delete(`/lessons/${lessonId}/attachments/${filename}`),
+  
+  // Update lesson attachments
+  updateAttachments: (lessonId, attachments) => api.put(`/lessons/${lessonId}/attachments`, { attachments }),
 };
 
 export default api; 

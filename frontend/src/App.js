@@ -58,12 +58,12 @@ function App() {
             </PrivateRoute>
           } />
           <Route path="create-course" element={
-            <PrivateRoute allowedRoles={['teacher', 'admin']}>
+            <PrivateRoute allowedRoles={['mentor', 'admin']}>
               <CreateCourse />
             </PrivateRoute>
           } />
           <Route path="edit-course/:id" element={
-            <PrivateRoute allowedRoles={['teacher', 'admin']}>
+            <PrivateRoute allowedRoles={['mentor', 'admin']}>
               <EditCourse />
             </PrivateRoute>
           } />
@@ -78,7 +78,7 @@ function App() {
             </PrivateRoute>
           } />
           <Route path="courses/:courseId/lessons" element={
-            <PrivateRoute allowedRoles={['teacher', 'admin']}>
+            <PrivateRoute allowedRoles={['mentor', 'admin']}>
               <LessonManagement />
             </PrivateRoute>
           } />

@@ -1,5 +1,20 @@
 # Learning Management System (LMS) - Naik Satu Level
 
+---
+
+## 🆕 Update & Perbaikan Terbaru (Juli 2025)
+
+- **Kursus kini menampilkan pembuat dan role** di halaman Courses dan Course Detail (misal: "Dibuat oleh: Ahmad Digital, Role: Mentor").
+- **Tombol aksi untuk mentor**: Jika user adalah mentor dan pembuat kursus, tombol aksi di Courses menjadi "Edit Course" (bukan Enroll).
+- **Gambar kursus**: Kini selalu tampil, menggunakan field `thumbnail` atau `image`, dan fallback ke gambar default jika tidak ada/gagal load.
+- **Status upload file**: Status "Uploading files..." pada upload thumbnail kini otomatis hilang setelah upload selesai.
+- **Kategori kursus**: Default kategori sekarang "Digital Marketing" dan dropdown hanya berisi kategori yang diinginkan. User tidak bisa submit jika kategori kosong.
+- **Role di dashboard & profile**: Semua dashboard dan halaman profile kini menampilkan role user (Student, Mentor, Administrator) dengan icon dan warna berbeda.
+- **Perbaikan konsistensi role**: Semua istilah teacher/instructor kini menjadi "mentor" di seluruh aplikasi.
+- **UI/UX**: Penambahan feedback visual dan notifikasi sukses/gagal pada upload file.
+
+---
+
 Platform pembelajaran online yang memungkinkan admin, teacher, dan student untuk berinteraksi dalam sistem pembelajaran yang terstruktur.
 
 ## 🚀 Fitur Utama
@@ -140,197 +155,4 @@ lms-app/
 - `POST /api/auth/register` - Register student baru (student only)
 - `POST /api/auth/login` - Login user
 - `GET /api/auth/me` - Get current user
-- `POST /api/auth/logout` - Logout
-
-### Admin User Management
-- `POST /api/auth/admin/users` - Create new user (admin only)
-- `GET /api/auth/admin/users` - Get all users (admin only)
-- `PATCH /api/auth/admin/users/:userId/role` - Update user role (admin only)
-
-### Users
-- `GET /api/users/students` - Get all students with enrollment data
-- `GET /api/users/students/:id` - Get student by ID
-- `PUT /api/users/students/:id/enrollments/:courseId/approve` - Approve enrollment
-- `PUT /api/users/students/:id/enrollments/:courseId/reject` - Reject enrollment
-
-### Courses
-- `GET /api/courses` - Get all published courses
-- `GET /api/courses/:id` - Get course by ID
-- `POST /api/courses` - Create course (teacher/admin)
-- `PUT /api/courses/:id` - Update course (teacher/admin)
-- `DELETE /api/courses/:id` - Delete course (teacher/admin)
-
-### Enrollments
-- `POST /api/enrollments` - Enroll in course
-- `GET /api/enrollments/user/:userId` - Get user enrollments
-- `PUT /api/enrollments/:id/status` - Update enrollment status
-
-## 🔐 Role-based Access Control
-
-- **Student**: Can register, login, browse courses, view course details, access dashboard
-- **Teacher**: Can login, create/edit/delete courses, manage course content, view student progress
-- **Admin**: Full access to all features, can create/manage users, manage courses, access admin interfaces
-
-## 👥 Default Users (Seed Data)
-
-Setelah menjalankan seed data, tersedia user default:
-
-- **Admin**: `admin@example.com` / `admin123`
-- **Teacher**: `ahmad.digital@example.com` / `teacher123`
-- **Student**: `ahmad@example.com` / `student123`
-
-## 🎨 UI Components
-
-Aplikasi menggunakan Tailwind CSS dengan modern dark theme:
-- **Dark Theme**: Gray-900 background dengan glass effect
-- **Responsive Design**: Mobile-first approach
-- **Modern Components**: Cards, buttons, forms dengan hover effects
-- **Icons**: Lucide React icons
-- **Notifications**: React Hot Toast untuk feedback
-
-## 📱 Pages & Routes
-
-### Public Pages
-- `/` - Home page
-- `/login` - Login page
-- `/register` - Student registration
-- `/courses` - Course listing
-
-### Protected Pages
-- `/dashboard` - User dashboard
-- `/profile` - User profile
-- `/courses/:id` - Course detail
-- `/create-course` - Create course (teacher/admin)
-- `/edit-course/:id` - Edit course (teacher/admin)
-
-### Admin Pages
-- `/users` - Student management
-- `/admin/users` - User management (create/edit users)
-
-## 🚀 Quick Start
-
-### 1. Clone Repository
-```bash
-git clone https://github.com/devcapybara/lms-app.git
-cd lms-app
-```
-
-### 2. Setup Backend
-```bash
-cd backend
-npm install
-cp env.example .env
-# Edit .env file dengan konfigurasi database
-npm run seed  # Untuk setup data awal
-npm start
-```
-
-### 3. Setup Frontend
-```bash
-cd frontend
-npm install
-npm start
-```
-
-### 4. Access Application
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:5000
-
-## 🧪 Testing
-
-### Backend
-```bash
-cd backend
-npm test
-```
-
-### Frontend
-```bash
-cd frontend
-npm test
-```
-
-## ✅ Fitur yang Sudah Selesai
-
-### User Management
-- ✅ User registration (student only)
-- ✅ User authentication & authorization
-- ✅ Role-based access control (Student, Teacher, Admin)
-- ✅ Admin user management interface
-- ✅ User profile management
-- ✅ Password hashing & JWT tokens
-
-### Course Management
-- ✅ Course CRUD operations
-- ✅ Course listing & search
-- ✅ Course detail pages
-- ✅ Course creation by teachers
-- ✅ Course editing & deletion
-
-### Frontend UI/UX
-- ✅ Modern dark theme design
-- ✅ Responsive layout
-- ✅ Navigation & routing
-- ✅ Form validation
-- ✅ Loading states & error handling
-- ✅ Toast notifications
-
-### Security
-- ✅ JWT authentication
-- ✅ Role-based middleware
-- ✅ Input validation
-- ✅ Protected routes
-
-## 🚧 Fitur dalam Pengembangan
-
-### Content Management
-- ⏳ Lesson management (video, PDF, quiz)
-- ⏳ Assessment system
-- ⏳ Progress tracking detail
-- ⏳ Course enrollment system
-
-### Advanced Features
-- ⏳ Level-based curriculum
-- ⏳ Certificate system
-- ⏳ Analytics dashboard
-- ⏳ Notification system
-
-## 📦 Deployment
-
-### Backend Deployment
-1. Set environment variables untuk production
-2. Build dan deploy ke platform seperti Heroku, Railway, atau VPS
-
-### Frontend Deployment
-1. Build aplikasi:
-   ```bash
-   cd frontend
-   npm run build
-   ```
-2. Deploy folder `build/` ke Netlify, Vercel, atau platform hosting lainnya
-
-## 🤝 Contributing
-
-1. Fork repository
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-Jika Anda mengalami masalah atau memiliki pertanyaan, silakan buat issue di repository ini.
-
-## 🔄 Roadmap
-
-- [ ] Video streaming integration
-- [ ] Real-time chat
-- [ ] Advanced analytics
-- [ ] Mobile app
-- [ ] Payment integration
-- [ ] Certificate generation
-- [ ] Multi-language support 
+- `POST /api/auth/logout`

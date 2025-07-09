@@ -17,6 +17,7 @@ import {
 import { courseAPI } from '../utils/api';
 import DashboardStudent from './DashboardStudent';
 import DashboardAdmin from './DashboardAdmin';
+import DashboardMentor from './DashboardMentor';
 
 export default function Dashboard() {
   const { user, hasRole } = useAuth();
@@ -77,8 +78,8 @@ export default function Dashboard() {
   if (hasRole && hasRole('student')) {
     return <DashboardStudent />;
   }
-  if (hasRole && hasRole('teacher')) {
-    return <div className="min-h-screen bg-gray-900 flex items-center justify-center"><div className="text-white text-xl">Dashboard untuk mentor coming soon.</div></div>;
+  if (hasRole && hasRole('mentor')) {
+    return <DashboardMentor />;
   }
   return <div className="min-h-screen bg-gray-900 flex items-center justify-center"><div className="text-white text-xl">Dashboard tidak tersedia.</div></div>;
 } 

@@ -9,7 +9,9 @@ import {
   Lock, 
   BookOpen,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  User,
+  Shield
 } from 'lucide-react';
 import { courseAPI } from '../utils/api';
 
@@ -36,7 +38,7 @@ export default function CourseDetail() {
     fetchCourseData();
     loadUserProgress();
     fetchEnrollmentStatus();
-    if (hasRole && (hasRole('admin') || hasRole('teacher'))) {
+    if (hasRole && (hasRole('admin') || hasRole('mentor'))) {
       fetchEnrollments();
     }
     if (enrollment) {
@@ -54,7 +56,7 @@ export default function CourseDetail() {
         title: 'Meta Ads Mastery',
         description: 'Pelajari strategi lengkap untuk mengoptimalkan iklan Facebook dan Instagram.',
         category: 'Digital Marketing',
-        instructor: 'Ahmad Digital',
+        mentor: 'Ahmad Digital',
         duration: '8 jam',
         lessons: 3,
         students: 156,
@@ -502,6 +504,23 @@ export default function CourseDetail() {
               <div>
                 <h1 className="text-3xl font-bold text-white">{course.title}</h1>
                 <p className="text-gray-400 mt-2">{course.description}</p>
+                
+                {/* Course Creator Info */}
+                <div className="flex items-center mt-3 space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <User className="h-4 w-4 text-blue-400" />
+                    <span className="text-sm text-gray-300">
+                      Dibuat oleh: <span className="font-medium text-white">{course.instructor?.name || course.mentor || 'Unknown'}</span>
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Shield className="h-4 w-4 text-green-400" />
+                    <span className="text-sm text-gray-300">
+                      Role: <span className="font-medium text-white">{course.instructor?.role === 'mentor' ? 'Mentor' : course.instructor?.role || 'Mentor'}</span>
+                    </span>
+                  </div>
+                </div>
+                
                 <div className="flex items-center mt-2 space-x-4">
                   <span className={`text-sm font-medium ${getEnrollmentStatusColor()}`}>
                     Status: {getEnrollmentStatusText()}
@@ -514,7 +533,7 @@ export default function CourseDetail() {
                 </div>
               </div>
             </div>
-            {hasRole && (hasRole('admin') || hasRole('teacher')) && (
+            {hasRole && (hasRole('admin') || hasRole('mentor')) && (
               <button
                 onClick={() => navigate(`/courses/${course._id}/lessons`)}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
@@ -748,7 +767,7 @@ export default function CourseDetail() {
           )
         )}
         {/* Daftar Enrollment untuk Admin/Mentor */}
-        {hasRole && (hasRole('admin') || hasRole('teacher')) && (
+        {hasRole && (hasRole('admin') || hasRole('mentor')) && (
           <div className="mt-8">
             <h2 className="text-xl font-bold text-white mb-4">Daftar Pendaftar</h2>
             {enrollmentsLoading ? (

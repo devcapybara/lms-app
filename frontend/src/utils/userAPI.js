@@ -125,8 +125,12 @@ export const userAPI = {
   uploadCV: async (file) => {
     const formData = new FormData();
     formData.append('cv', file);
+    const token = localStorage.getItem('token');
     const response = await api.post('/upload/cv', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data' 
+      }
     });
     return response.data;
   },
@@ -135,8 +139,12 @@ export const userAPI = {
   uploadPhoto: async (file) => {
     const formData = new FormData();
     formData.append('photo', file);
+    const token = localStorage.getItem('token');
     const response = await api.post('/upload/photo', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data' 
+      }
     });
     return response.data;
   },
@@ -144,6 +152,18 @@ export const userAPI = {
   // Update Profile
   updateProfile: async (profileData) => {
     const response = await api.put('/users/profile', profileData);
+    return response.data;
+  },
+
+  // Delete CV
+  deleteCV: async () => {
+    const response = await api.delete('/upload/cv');
+    return response.data;
+  },
+
+  // Delete Photo
+  deletePhoto: async () => {
+    const response = await api.delete('/upload/photo');
     return response.data;
   }
 }; 

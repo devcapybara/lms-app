@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import ProfileForm from '../../components/ProfileForm';
+import PdfPreview from '../../components/PdfPreview';
+import { Shield } from 'lucide-react';
 
-const InstructorProfile = ({ user }) => {
+const MentorProfile = ({ user }) => {
   const [editMode, setEditMode] = useState(false);
   const [profile, setProfile] = useState(user);
   const isOwner = true;
@@ -9,24 +11,27 @@ const InstructorProfile = ({ user }) => {
     setProfile(updatedUser);
     setEditMode(false);
   };
+  const API_BASE_URL = 'http://localhost:5000';
+  const getPdfUrl = (cv) => cv?.startsWith('http') ? cv : `${API_BASE_URL}${cv}`;
   if (editMode) {
     return (
       <div className="max-w-2xl mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-4 text-white">Edit Profil Instructor</h1>
+        <h1 className="text-2xl font-bold mb-4 text-white">Edit Profil Mentor</h1>
         <ProfileForm user={profile} onProfileUpdated={handleProfileUpdated} />
         <button className="mt-4 text-gray-300 underline" onClick={() => setEditMode(false)}>Batal</button>
       </div>
     );
   }
-  const API_BASE_URL = 'http://localhost:5000';
-  const getPdfUrl = (cv) => cv?.startsWith('http') ? cv : `${API_BASE_URL}${cv}`;
   return (
     <div className="max-w-2xl mx-auto p-6 bg-[#181c2a] rounded shadow border border-[#23263a]">
       <div className="flex items-center gap-6 mb-6">
-        <img src={profile.photo || '/default-avatar.png'} alt="Foto Profil" className="w-24 h-24 rounded-full object-cover border border-[#23263a] bg-[#23263a]" />
+        <img src={profile.photo || 'https://via.placeholder.com/96x96/6B7280/FFFFFF?text=M'} alt="Foto Profil" className="w-24 h-24 rounded-full object-cover border border-[#23263a] bg-[#23263a]" />
         <div>
           <h1 className="text-3xl font-bold text-white">{profile.name}</h1>
-          <div className="text-gray-400">Instructor</div>
+          <div className="flex items-center space-x-2">
+            <Shield className="h-4 w-4 text-green-400" />
+            <span className="text-gray-400 font-medium">Role: Mentor</span>
+          </div>
         </div>
       </div>
       <div className="mb-4">
@@ -38,11 +43,7 @@ const InstructorProfile = ({ user }) => {
         {profile.cv ? (
           profile.cv.endsWith('.pdf') ? (
             <div>
-              <iframe
-                src={getPdfUrl(profile.cv)}
-                title="CV Preview"
-                className="w-full h-96 border border-[#23263a] rounded bg-white"
-              />
+              <PdfPreview fileUrl={getPdfUrl(profile.cv)} height={400} />
               <a
                 href={getPdfUrl(profile.cv)}
                 target="_blank"
@@ -89,4 +90,4 @@ const InstructorProfile = ({ user }) => {
   );
 };
 
-export default InstructorProfile; 
+export default MentorProfile; 

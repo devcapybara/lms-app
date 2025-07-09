@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { courseAPI } from '../utils/api';
+import { useAuth } from '../utils/AuthContext';
+import { User, Shield } from 'lucide-react';
 
 export default function DashboardStudent() {
+  const { user } = useAuth();
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -26,6 +29,28 @@ export default function DashboardStudent() {
   return (
     <div className="min-h-screen bg-gray-900 py-8 px-4">
       <div className="max-w-5xl mx-auto">
+        {/* User Info Header */}
+        <div className="bg-gray-800 rounded-lg p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                <User className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-white">{user?.name || 'Student'}</h2>
+                <div className="flex items-center space-x-2 mt-1">
+                  <Shield className="h-4 w-4 text-green-400" />
+                  <span className="text-sm text-gray-300">Role: Student</span>
+                </div>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-gray-400">Welcome back!</p>
+              <p className="text-xs text-gray-500">Ready to continue learning?</p>
+            </div>
+          </div>
+        </div>
+        
         <h1 className="text-3xl font-bold text-white mb-6">Dashboard Siswa</h1>
         {loading ? (
           <div className="text-gray-400">Loading...</div>

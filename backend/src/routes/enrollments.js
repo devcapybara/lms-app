@@ -5,7 +5,7 @@ const Enrollment = require('../models/Enrollment');
 const router = express.Router();
 
 // Update status enrollment (admin/mentor only)
-router.patch('/:id/status', auth, authorize('admin', 'teacher'), async (req, res) => {
+router.patch('/:id/status', auth, authorize('admin', 'mentor'), async (req, res) => {
   try {
     const { status } = req.body;
     if (!['pending', 'approved', 'rejected'].includes(status)) {

@@ -14,7 +14,9 @@ import {
   Trash2,
   Plus,
   Play,
-  Eye
+  Eye,
+  User,
+  Shield
 } from 'lucide-react';
 
 export default function Courses() {
@@ -233,20 +235,14 @@ export default function Courses() {
                 {/* Course Image */}
                 <div className="relative h-48 bg-gray-700">
                   <img
-                    src={getImageUrl(course.image)}
+                    src={course.thumbnail || course.image || '/default-course.png'}
                     alt={course.title}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
+                      e.target.onerror = null;
+                      e.target.src = '/default-course.png';
                     }}
                   />
-                  <div className="hidden absolute inset-0 bg-gray-600 flex items-center justify-center">
-                    <div className="text-center text-gray-400">
-                      <BookOpen className="h-12 w-12 mx-auto mb-2" />
-                      <p className="text-sm">No Image</p>
-                    </div>
-                  </div>
                   <div className="absolute top-3 right-3">
                     <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
                       {course.category}
@@ -262,6 +258,22 @@ export default function Courses() {
                   <p className="text-gray-400 text-sm mb-4 line-clamp-3">
                     {course.description}
                   </p>
+
+                  {/* Course Creator Info */}
+                  <div className="flex items-center space-x-4 mb-3">
+                    <div className="flex items-center space-x-1">
+                      <User className="h-3 w-3 text-blue-400" />
+                      <span className="text-xs text-gray-300">
+                        <span className="text-gray-400">Dibuat oleh:</span> {course.instructor?.name || course.mentor || 'Unknown'}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Shield className="h-3 w-3 text-green-400" />
+                      <span className="text-xs text-gray-300">
+                        <span className="text-gray-400">Role:</span> {course.instructor?.role === 'mentor' ? 'Mentor' : course.instructor?.role || 'Mentor'}
+                      </span>
+                    </div>
+                  </div>
 
                   {/* Course Meta */}
                   <div className="flex items-center justify-between text-sm text-gray-400 mb-4">
@@ -328,7 +340,16 @@ export default function Courses() {
                           >
                             <Eye className="h-5 w-5" />
                           </Link>
-                          {course.isEnrolled && course.enrollmentStatus === 'approved' ? (
+                          {/* Mentor: Edit Course if owner */}
+                          {hasRole('mentor') && course.instructor?._id === user?._id ? (
+                            <Link
+                              to={`/edit-course/${course._id}`}
+                              className="flex items-center px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded-lg transition-colors"
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit Course
+                            </Link>
+                          ) : course.isEnrolled && course.enrollmentStatus === 'approved' ? (
                             <Link
                               to={`/courses/${course._id}`}
                               className="flex items-center px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors"

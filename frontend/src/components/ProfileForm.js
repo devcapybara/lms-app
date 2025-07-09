@@ -97,6 +97,25 @@ const ProfileForm = ({ user, onProfileUpdated }) => {
         {user.cv && (
           <div className="mt-1 text-sm">
             CV saat ini: <a href={user.cv} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">Download CV</a>
+            <button 
+              type="button" 
+              onClick={async () => {
+                if (window.confirm('Yakin ingin menghapus CV?')) {
+                  try {
+                    await userAPI.deleteCV();
+                    if (onProfileUpdated) {
+                      const updatedUser = { ...user, cv: null };
+                      onProfileUpdated(updatedUser);
+                    }
+                  } catch (err) {
+                    setError('Gagal menghapus CV.');
+                  }
+                }
+              }}
+              className="ml-2 text-red-400 underline"
+            >
+              Hapus CV
+            </button>
           </div>
         )}
       </div>
@@ -106,6 +125,25 @@ const ProfileForm = ({ user, onProfileUpdated }) => {
         {user.photo && (
           <div className="mt-1">
             <img src={user.photo} alt="Foto Profil" className="w-20 h-20 rounded-full object-cover border border-[#23263a] bg-[#23263a]" />
+            <button 
+              type="button" 
+              onClick={async () => {
+                if (window.confirm('Yakin ingin menghapus foto profil?')) {
+                  try {
+                    await userAPI.deletePhoto();
+                    if (onProfileUpdated) {
+                      const updatedUser = { ...user, photo: null };
+                      onProfileUpdated(updatedUser);
+                    }
+                  } catch (err) {
+                    setError('Gagal menghapus foto profil.');
+                  }
+                }
+              }}
+              className="ml-2 text-red-400 underline text-sm"
+            >
+              Hapus Foto
+            </button>
           </div>
         )}
       </div>

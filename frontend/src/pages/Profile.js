@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../utils/AuthContext';
 import AdminProfile from './Profile/AdminProfile';
-import InstructorProfile from './Profile/InstructorProfile';
+import MentorProfile from './Profile/MentorProfile';
 import StudentProfile from './Profile/StudentProfile';
 
 export default function Profile() {
@@ -18,8 +18,8 @@ export default function Profile() {
   switch (user.role) {
     case 'admin':
       return <AdminProfile user={user} />;
-    case 'instructor':
-      return <InstructorProfile user={user} />;
+    case 'mentor':
+      return <MentorProfile user={user} />;
     case 'student':
       return <StudentProfile user={user} />;
     default:

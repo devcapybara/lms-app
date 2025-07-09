@@ -30,13 +30,13 @@ const seedData = async () => {
       role: 'admin'
     });
 
-    // Create teacher user
-    const teacher = await User.create({
-      name: 'Ahmad Digital',
-      email: 'ahmad.digital@example.com',
-      password: 'teacher123',
-      role: 'teacher'
-    });
+    // Create mentor user
+const mentor = await User.create({
+  name: 'Ahmad Digital',
+  email: 'ahmad.digital@example.com',
+  password: 'mentor123',
+  role: 'mentor'
+});
 
     // Create sample students
     const students = await User.create([
@@ -73,7 +73,7 @@ const seedData = async () => {
     console.log('Data seeded successfully!');
     console.log(`Created ${students.length} students`);
     console.log('Admin credentials: admin@example.com / admin123');
-    console.log('Teacher credentials: ahmad.digital@example.com / teacher123');
+    console.log('Mentor credentials: ahmad.digital@example.com / mentor123');
     console.log('Student credentials: ahmad@example.com / student123');
 
   } catch (error) {

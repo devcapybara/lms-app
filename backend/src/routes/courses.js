@@ -37,7 +37,7 @@ router.get('/', async (req, res) => {
     }
 
     const courses = await Course.find(filter)
-      .populate('instructor', 'name email avatar')
+      .populate('instructor', 'name email avatar role')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -60,7 +60,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const course = await Course.findById(req.params.id)
-      .populate('instructor', 'name email avatar bio')
+      .populate('instructor', 'name email avatar bio role')
       .populate('lessons', 'title description order duration');
 
     if (!course) {
@@ -74,8 +74,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create course (teachers only)
-router.post('/', auth, authorize('teacher', 'admin'), [
+// Create course (mentors only)
+router.post('/', auth, authorize('mentor', 'admin'), [
   body('title').trim().isLength({ min: 3, max: 100 }).withMessage('Judul harus 3-100 karakter'),
   body('description').trim().isLength({ min: 10, max: 1000 }).withMessage('Deskripsi harus 10-1000 karakter'),
   body('level').optional().isIn(['beginner', 'intermediate', 'advanced']).withMessage('Level tidak valid'),
@@ -311,7 +311,7 @@ router.post('/:id/rate', auth, [
 });
 
 // Get enrollments for a course (admin/mentor only)
-router.get('/:id/enrollments', auth, authorize('admin', 'teacher'), async (req, res) => {
+router.get('/:id/enrollments', auth, authorize('admin', 'mentor'), async (req, res) => {
   try {
     const enrollments = await Enrollment.find({ course: req.params.id })
       .populate('student', 'name email role')

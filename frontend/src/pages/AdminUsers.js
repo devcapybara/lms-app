@@ -60,7 +60,7 @@ export default function AdminUsers() {
     switch (role) {
       case 'admin':
         return 'bg-red-100 text-red-800 border-red-200';
-      case 'teacher':
+      case 'mentor':
         return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'student':
         return 'bg-green-100 text-green-800 border-green-200';
@@ -73,8 +73,8 @@ export default function AdminUsers() {
     switch (role) {
       case 'admin':
         return 'Admin';
-      case 'teacher':
-        return 'Teacher';
+      case 'mentor':
+        return 'Mentor';
       case 'student':
         return 'Student';
       default:
@@ -173,7 +173,7 @@ export default function AdminUsers() {
                         className="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2"
                       >
                         <option value="student">Student</option>
-                        <option value="teacher">Teacher</option>
+                        <option value="mentor">Mentor</option>
                         <option value="admin">Admin</option>
                       </select>
                     </td>
@@ -237,7 +237,7 @@ export default function AdminUsers() {
                       className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="student">Student</option>
-                      <option value="teacher">Teacher</option>
+                      <option value="mentor">Mentor</option>
                       <option value="admin">Admin</option>
                     </select>
                   </div>

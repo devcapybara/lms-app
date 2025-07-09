@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['student', 'instructor', 'admin'], // ganti 'teacher' jadi 'instructor' agar konsisten
+    enum: ['student', 'mentor', 'admin'], // ganti 'teacher' jadi 'mentor' agar konsisten
     default: 'student'
   },
   // avatar: {

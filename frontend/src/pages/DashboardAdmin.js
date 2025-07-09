@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { userAPI } from '../utils/userAPI';
-import { BookOpen, Users, BarChart3, Plus, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { useAuth } from '../utils/AuthContext';
+import { BookOpen, Users, BarChart3, Plus, TrendingUp, Clock, CheckCircle, Shield } from 'lucide-react';
 
 export default function DashboardAdmin() {
+  const { user } = useAuth();
   const [stats, setStats] = useState({
     totalCourses: 0,
     totalStudents: 0,
@@ -39,6 +41,28 @@ export default function DashboardAdmin() {
 
   return (
     <div className="space-y-6">
+      {/* Admin Role Header */}
+      <div className="bg-gray-800 rounded-lg p-6 mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
+              <Shield className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-white">{user?.name || 'Admin'}</h2>
+              <div className="flex items-center space-x-2 mt-1">
+                <Shield className="h-4 w-4 text-red-400" />
+                <span className="text-sm text-gray-300">Role: Administrator</span>
+              </div>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-gray-400">System Overview</p>
+            <p className="text-xs text-gray-500">Manage all courses and users</p>
+          </div>
+        </div>
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
           <div className="flex items-center">

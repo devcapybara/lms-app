@@ -59,7 +59,7 @@ router.get('/:id', auth, async (req, res) => {
 });
 
 // Create lesson (instructor only)
-router.post('/', auth, authorize('teacher', 'admin'), [
+router.post('/', auth, authorize('mentor', 'admin'), [
   body('title').trim().isLength({ min: 3, max: 100 }).withMessage('Judul harus 3-100 karakter'),
   body('description').optional().trim().isLength({ max: 500 }).withMessage('Deskripsi maksimal 500 karakter'),
   body('course').isMongoId().withMessage('ID kursus tidak valid'),
@@ -295,6 +295,106 @@ router.get('/:id/progress', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Get lesson progress error:', error);
+    res.status(500).json({ message: 'Error server' });
+  }
+});
+
+// Add attachments to lesson
+router.post('/:id/attachments', auth, authorize('mentor', 'admin'), async (req, res) => {
+  try {
+    const { attachments } = req.body;
+    
+    if (!attachments || !Array.isArray(attachments)) {
+      return res.status(400).json({ message: 'Attachments harus berupa array' });
+    }
+
+    const lesson = await Lesson.findById(req.params.id).populate('course');
+    if (!lesson) {
+      return res.status(404).json({ message: 'Pelajaran tidak ditemukan' });
+    }
+
+    // Check if user is the instructor or admin
+    if (lesson.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Anda tidak memiliki izin untuk mengedit pelajaran ini' });
+    }
+
+    // Add new attachments
+    lesson.attachments = [...lesson.attachments, ...attachments];
+    await lesson.save();
+
+    res.json({
+      message: 'Attachments berhasil ditambahkan',
+      attachments: lesson.attachments
+    });
+  } catch (error) {
+    console.error('Add attachments error:', error);
+    res.status(500).json({ message: 'Error server' });
+  }
+});
+
+// Remove attachment from lesson
+router.delete('/:id/attachments/:filename', auth, authorize('mentor', 'admin'), async (req, res) => {
+  try {
+    const { filename } = req.params;
+    
+    const lesson = await Lesson.findById(req.params.id).populate('course');
+    if (!lesson) {
+      return res.status(404).json({ message: 'Pelajaran tidak ditemukan' });
+    }
+
+    // Check if user is the instructor or admin
+    if (lesson.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Anda tidak memiliki izin untuk mengedit pelajaran ini' });
+    }
+
+    // Find and remove the attachment
+    const attachmentIndex = lesson.attachments.findIndex(att => att.filename === filename);
+    if (attachmentIndex === -1) {
+      return res.status(404).json({ message: 'Attachment tidak ditemukan' });
+    }
+
+    lesson.attachments.splice(attachmentIndex, 1);
+    await lesson.save();
+
+    res.json({
+      message: 'Attachment berhasil dihapus',
+      attachments: lesson.attachments
+    });
+  } catch (error) {
+    console.error('Remove attachment error:', error);
+    res.status(500).json({ message: 'Error server' });
+  }
+});
+
+// Update lesson attachments
+router.put('/:id/attachments', auth, authorize('mentor', 'admin'), async (req, res) => {
+  try {
+    const { attachments } = req.body;
+    
+    if (!attachments || !Array.isArray(attachments)) {
+      return res.status(400).json({ message: 'Attachments harus berupa array' });
+    }
+
+    const lesson = await Lesson.findById(req.params.id).populate('course');
+    if (!lesson) {
+      return res.status(404).json({ message: 'Pelajaran tidak ditemukan' });
+    }
+
+    // Check if user is the instructor or admin
+    if (lesson.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Anda tidak memiliki izin untuk mengedit pelajaran ini' });
+    }
+
+    // Update attachments
+    lesson.attachments = attachments;
+    await lesson.save();
+
+    res.json({
+      message: 'Attachments berhasil diperbarui',
+      attachments: lesson.attachments
+    });
+  } catch (error) {
+    console.error('Update attachments error:', error);
     res.status(500).json({ message: 'Error server' });
   }
 });

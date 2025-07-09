@@ -14,7 +14,8 @@ import {
   X
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { courseAPI, lessonAPI } from '../utils/api';
+import { courseAPI, lessonAPI, lessonAttachmentsAPI } from '../utils/api';
+import FileUpload from '../components/FileUpload';
 
 export default function LessonManagement() {
   const { courseId } = useParams();
@@ -40,6 +41,7 @@ export default function LessonManagement() {
     passingScore: 70
   });
   const [showQuizEditor, setShowQuizEditor] = useState(false);
+  const [attachments, setAttachments] = useState([]);
 
   useEffect(() => {
     fetchCourseAndLessons();
@@ -70,7 +72,13 @@ export default function LessonManagement() {
         quiz: quizData
       };
       
-      await lessonAPI.create(lessonData);
+      const lesson = await lessonAPI.create(lessonData);
+      
+      // Add attachments if any
+      if (attachments.length > 0) {
+        await lessonAttachmentsAPI.addAttachments(lesson.data.lesson._id, attachments);
+      }
+      
       toast.success('Pelajaran berhasil dibuat');
       setShowCreateModal(false);
       resetForm();
@@ -89,6 +97,10 @@ export default function LessonManagement() {
       };
       
       await lessonAPI.update(selectedLesson._id, lessonData);
+      
+      // Update attachments
+      await lessonAttachmentsAPI.updateAttachments(selectedLesson._id, attachments);
+      
       toast.success('Pelajaran berhasil diperbarui');
       setShowEditModal(false);
       resetForm();
@@ -112,20 +124,7 @@ export default function LessonManagement() {
     }
   };
 
-  const handleEditLesson = (lesson) => {
-    setSelectedLesson(lesson);
-    setFormData({
-      title: lesson.title,
-      description: lesson.description || '',
-      content: lesson.content,
-      order: lesson.order,
-      duration: lesson.duration || 0,
-      videoUrl: lesson.videoUrl || '',
-      isPublished: lesson.isPublished
-    });
-    setQuizData(lesson.quiz || { questions: [], timeLimit: 0, passingScore: 70 });
-    setShowEditModal(true);
-  };
+
 
   const resetForm = () => {
     setFormData({
@@ -142,6 +141,7 @@ export default function LessonManagement() {
       timeLimit: 0,
       passingScore: 70
     });
+    setAttachments([]);
     setSelectedLesson(null);
   };
 
@@ -171,6 +171,45 @@ export default function LessonManagement() {
       ...prev,
       questions: prev.questions.filter((_, i) => i !== index)
     }));
+  };
+
+  // Attachment management
+  const handleFilesUploaded = (files) => {
+    setAttachments(prev => [...prev, ...files]);
+  };
+
+  const handleFileDelete = async (file) => {
+    try {
+      // Remove from attachments state
+      setAttachments(prev => prev.filter(f => f.filename !== file.filename));
+      
+      // If editing existing lesson, also remove from lesson
+      if (selectedLesson && selectedLesson.attachments) {
+        const updatedAttachments = selectedLesson.attachments.filter(f => f.filename !== file.filename);
+        await lessonAttachmentsAPI.updateAttachments(selectedLesson._id, updatedAttachments);
+      }
+      
+      toast.success('File berhasil dihapus');
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      toast.error('Gagal menghapus file');
+    }
+  };
+
+  const handleEditLesson = (lesson) => {
+    setSelectedLesson(lesson);
+    setFormData({
+      title: lesson.title,
+      description: lesson.description || '',
+      content: lesson.content,
+      order: lesson.order,
+      duration: lesson.duration || 0,
+      videoUrl: lesson.videoUrl || '',
+      isPublished: lesson.isPublished
+    });
+    setQuizData(lesson.quiz || { questions: [], timeLimit: 0, passingScore: 70 });
+    setAttachments(lesson.attachments || []);
+    setShowEditModal(true);
   };
 
   if (loading) {
@@ -407,6 +446,22 @@ export default function LessonManagement() {
                       className="w-full px-3 py-2 border border-gray-600 text-white bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Tulis konten pelajaran dalam format HTML atau markdown..."
                       required
+                    />
+                  </div>
+
+                  {/* File Upload Section */}
+                  <div className="border-t border-gray-700 pt-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-medium text-white">Materi Pelajaran</h3>
+                    </div>
+                    <FileUpload
+                      onFilesUploaded={handleFilesUploaded}
+                      existingFiles={attachments}
+                      onFileDelete={handleFileDelete}
+                      maxFiles={5}
+                      allowedTypes={['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'jpg', 'jpeg', 'png', 'gif']}
+                      maxSize={10 * 1024 * 1024} // 10MB
+                      uploadType="lesson-materials"
                     />
                   </div>
 

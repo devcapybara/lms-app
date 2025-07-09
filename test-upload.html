@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Upload CV</title>
+</head>
+<body>
+    <h2>Test Upload CV</h2>
+    <input type="file" id="cvFile" accept=".pdf">
+    <button onclick="uploadCV()">Upload CV</button>
+    <div id="result"></div>
+
+    <script>
+        async function uploadCV() {
+            const fileInput = document.getElementById('cvFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Pilih file terlebih dahulu');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('cv', file);
+
+            try {
+                const response = await fetch('http://localhost:5000/api/upload/cv', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+                document.getElementById('result').innerHTML = 
+                    `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('result').innerHTML = 
+                    `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html> 

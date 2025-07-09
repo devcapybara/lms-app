@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, BookOpen, CheckCircle, Clock, XCircle, Eye } from 'lucide-react';
+import { Mail, BookOpen, CheckCircle, Clock, XCircle, Eye, Shield } from 'lucide-react';
 
 export default function UserCard({ user, getStatusColor, getStatusIcon, onViewDetail }) {
   return (
@@ -15,9 +15,13 @@ export default function UserCard({ user, getStatusColor, getStatusIcon, onViewDe
             />
             <div>
               <h3 className="text-lg font-semibold text-white">{user.name}</h3>
-              <div className="flex items-center text-sm text-gray-400">
+              <div className="flex items-center text-sm text-gray-400 mb-1">
                 <Mail className="h-4 w-4 mr-1" />
                 {user.email}
+              </div>
+              <div className="flex items-center text-xs text-gray-400">
+                <Shield className="h-3 w-3 mr-1" />
+                Role: {user.role === 'student' ? 'Student' : user.role === 'mentor' ? 'Mentor' : user.role === 'admin' ? 'Administrator' : user.role}
               </div>
             </div>
           </div>

@@ -264,19 +264,30 @@ router.get('/enrolled-courses', auth, async (req, res) => {
   }
 });
 
-// Get created courses (for teachers)
-router.get('/created-courses', auth, authorize('teacher', 'admin'), async (req, res) => {
+// Get created courses (for mentors)
+router.get('/created-courses', auth, authorize('mentor', 'admin'), async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
       .populate({
         path: 'createdCourses',
-        populate: {
-          path: 'instructor',
-          select: 'name email avatar'
-        }
+        populate: [
+          {
+            path: 'instructor',
+            select: 'name email avatar'
+          },
+          {
+            path: 'enrollments',
+            populate: {
+              path: 'student',
+              select: 'name email'
+            }
+          }
+        ]
       });
 
-    res.json(user.createdCourses);
+    res.json({
+      courses: user.createdCourses || []
+    });
   } catch (error) {
     console.error('Get created courses error:', error);
     res.status(500).json({ message: 'Error server' });
@@ -285,7 +296,7 @@ router.get('/created-courses', auth, authorize('teacher', 'admin'), async (req, 
 
 // Update user role (admin only)
 router.put('/:id/role', auth, authorize('admin'), [
-  body('role').isIn(['student', 'teacher', 'admin']).withMessage('Role tidak valid')
+      body('role').isIn(['student', 'mentor', 'admin']).withMessage('Role tidak valid')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);

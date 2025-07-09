@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { courseAPI } from '../utils/api';
+import { courseAPI, uploadAPI } from '../utils/api';
 import ImageUpload from '../components/ImageUpload';
+import FileUpload from '../components/FileUpload';
 import { 
   BookOpen, 
   FileText, 
@@ -23,9 +24,10 @@ export default function CreateCourse() {
     // Course Info
     title: '',
     description: '',
-    category: 'programming',
+    category: 'Digital Marketing',
     price: '',
     image: '',
+    thumbnail: '',
     
     // Course Content with integrated tests
     lessons: [
@@ -100,6 +102,16 @@ export default function CreateCourse() {
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleThumbnailUpload = (files) => {
+    if (files && files.length > 0) {
+      const file = files[0];
+      setFormData(prev => ({
+        ...prev,
+        thumbnail: file.imageUrl || file.path
+      }));
+    }
   };
 
   const addQuestion = (lessonIndex, testType) => {
@@ -253,7 +265,7 @@ export default function CreateCourse() {
       // Kirim data JSON biasa, cover image pakai URL
       await courseAPI.create({
         ...formData,
-        thumbnail: formData.image
+        thumbnail: formData.thumbnail || formData.image
       });
       alert('Course created successfully!');
       navigate('/courses');
@@ -318,7 +330,9 @@ export default function CreateCourse() {
             value={formData.category}
             onChange={(e) => handleCourseInfoChange('category', e.target.value)}
             className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
           >
+            <option value="">-- Pilih Kategori --</option>
             <option value="Digital Marketing">Digital Marketing</option>
             <option value="Social Media">Social Media</option>
             <option value="Business">Business</option>
@@ -362,6 +376,20 @@ export default function CreateCourse() {
         <ImageUpload
           value={formData.image}
           onChange={(value) => handleCourseInfoChange('image', value)}
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Course Thumbnail
+        </label>
+        <FileUpload
+          onFilesUploaded={handleThumbnailUpload}
+          existingFiles={formData.thumbnail ? [{ filename: formData.thumbnail, originalName: 'thumbnail.jpg' }] : []}
+          maxFiles={1}
+          allowedTypes={['jpg', 'jpeg', 'png', 'gif']}
+          maxSize={5 * 1024 * 1024} // 5MB
+          uploadType="course-image"
         />
       </div>
     </div>

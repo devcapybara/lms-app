@@ -224,7 +224,7 @@ export default function LessonDetail() {
                   <div className="flex items-center space-x-2">
                     {canPreview(attachment.filename) && (
                       <a
-                        href={`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/upload/lesson-materials/${attachment.filename}/preview`}
+                        href={attachment.path}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-1 text-blue-500 hover:text-blue-400"
@@ -235,7 +235,7 @@ export default function LessonDetail() {
                     )}
                     
                     <a
-                      href={`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/upload/lesson-materials/${attachment.filename}`}
+                      href={attachment.path}
                       download
                       className="p-1 text-green-500 hover:text-green-400"
                       title="Download"

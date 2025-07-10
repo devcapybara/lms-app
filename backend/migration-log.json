@@ -1,0 +1,66 @@
+{
+  "timestamp": "2025-07-10T19:49:23.707Z",
+  "totalFiles": 10,
+  "results": [
+    {
+      "originalPath": "D:\\lms-app\\backend\\uploads\\course-images\\course-1752042730185-952087591.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/dhcdlm6pe/image/upload/v1752176912/lms/course-images/lms/course-images/course-1752042730185-952087591.jpg",
+      "publicId": "lms/course-images/lms/course-images/course-1752042730185-952087591",
+      "category": "course-images"
+    },
+    {
+      "originalPath": "D:\\lms-app\\backend\\uploads\\course-images\\course-1752043147108-522987711.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/dhcdlm6pe/image/upload/v1752176913/lms/course-images/lms/course-images/course-1752043147108-522987711.jpg",
+      "publicId": "lms/course-images/lms/course-images/course-1752043147108-522987711",
+      "category": "course-images"
+    },
+    {
+      "originalPath": "D:\\lms-app\\backend\\uploads\\course-images\\course-1752043740366-413292542.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/dhcdlm6pe/image/upload/v1752176915/lms/course-images/lms/course-images/course-1752043740366-413292542.jpg",
+      "publicId": "lms/course-images/lms/course-images/course-1752043740366-413292542",
+      "category": "course-images"
+    },
+    {
+      "originalPath": "D:\\lms-app\\backend\\uploads\\cv\\cv-1751995627148-912899503.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/dhcdlm6pe/image/upload/v1752176916/lms/cv/lms/cv/cv-1751995627148-912899503.pdf",
+      "publicId": "lms/cv/lms/cv/cv-1751995627148-912899503",
+      "category": "cv"
+    },
+    {
+      "originalPath": "D:\\lms-app\\backend\\uploads\\cv\\cv-1751996211299-434157819.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/dhcdlm6pe/image/upload/v1752176918/lms/cv/lms/cv/cv-1751996211299-434157819.pdf",
+      "publicId": "lms/cv/lms/cv/cv-1751996211299-434157819",
+      "category": "cv"
+    },
+    {
+      "originalPath": "D:\\lms-app\\backend\\uploads\\cv\\cv-1752040357679-694416903.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/dhcdlm6pe/image/upload/v1752176920/lms/cv/lms/cv/cv-1752040357679-694416903.pdf",
+      "publicId": "lms/cv/lms/cv/cv-1752040357679-694416903",
+      "category": "cv"
+    },
+    {
+      "originalPath": "D:\\lms-app\\backend\\uploads\\cv\\cv-1752041747592-281407301.pdf",
+      "cloudinaryUrl": "https://res.cloudinary.com/dhcdlm6pe/image/upload/v1752176921/lms/cv/lms/cv/cv-1752041747592-281407301.pdf",
+      "publicId": "lms/cv/lms/cv/cv-1752041747592-281407301",
+      "category": "cv"
+    },
+    {
+      "originalPath": "D:\\lms-app\\backend\\uploads\\photo\\photo-1751996433038-950784369.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/dhcdlm6pe/image/upload/v1752176922/lms/photos/lms/photos/photo-1751996433038-950784369.jpg",
+      "publicId": "lms/photos/lms/photos/photo-1751996433038-950784369",
+      "category": "photo"
+    },
+    {
+      "originalPath": "D:\\lms-app\\backend\\uploads\\photo\\photo-1752040358096-20072642.jpeg",
+      "cloudinaryUrl": "https://res.cloudinary.com/dhcdlm6pe/image/upload/v1752176923/lms/photos/lms/photos/photo-1752040358096-20072642.jpg",
+      "publicId": "lms/photos/lms/photos/photo-1752040358096-20072642",
+      "category": "photo"
+    },
+    {
+      "originalPath": "D:\\lms-app\\backend\\uploads\\photo\\photo-1752041598012-752256801.png",
+      "cloudinaryUrl": "https://res.cloudinary.com/dhcdlm6pe/image/upload/v1752176925/lms/photos/lms/photos/photo-1752041598012-752256801.png",
+      "publicId": "lms/photos/lms/photos/photo-1752041598012-752256801",
+      "category": "photo"
+    }
+  ]
+}

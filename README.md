@@ -1,158 +1,216 @@
-# Learning Management System (LMS) - Naik Satu Level
+# LMS App
 
----
+Learning Management System (LMS) dengan fitur lengkap untuk pembelajaran online.
 
-## 🆕 Update & Perbaikan Terbaru (Juli 2025)
+## 🏗️ Architecture
 
-- **Kursus kini menampilkan pembuat dan role** di halaman Courses dan Course Detail (misal: "Dibuat oleh: Ahmad Digital, Role: Mentor").
-- **Tombol aksi untuk mentor**: Jika user adalah mentor dan pembuat kursus, tombol aksi di Courses menjadi "Edit Course" (bukan Enroll).
-- **Gambar kursus**: Kini selalu tampil, menggunakan field `thumbnail` atau `image`, dan fallback ke gambar default jika tidak ada/gagal load.
-- **Status upload file**: Status "Uploading files..." pada upload thumbnail kini otomatis hilang setelah upload selesai.
-- **Kategori kursus**: Default kategori sekarang "Digital Marketing" dan dropdown hanya berisi kategori yang diinginkan. User tidak bisa submit jika kategori kosong.
-- **Role di dashboard & profile**: Semua dashboard dan halaman profile kini menampilkan role user (Student, Mentor, Administrator) dengan icon dan warna berbeda.
-- **Perbaikan konsistensi role**: Semua istilah teacher/instructor kini menjadi "mentor" di seluruh aplikasi.
-- **UI/UX**: Penambahan feedback visual dan notifikasi sukses/gagal pada upload file.
+### **Cloud Infrastructure**
+- **Database**: MongoDB Atlas (Cloud)
+- **File Storage**: Cloudinary (Cloud, 100% - tidak ada file upload di lokal/backend)
+- **Backend**: Node.js/Express (Local → Cloud)
+- **Frontend**: React (Local → Cloud)
 
----
+### **Tech Stack**
+- **Backend**: Node.js, Express, MongoDB, JWT
+- **Frontend**: React, Tailwind CSS, Axios
+- **File Storage**: Cloudinary
+- **Database**: MongoDB Atlas
 
-Platform pembelajaran online yang memungkinkan admin, teacher, dan student untuk berinteraksi dalam sistem pembelajaran yang terstruktur.
+## 📊 File Storage (Cloudinary)
 
-## 🚀 Fitur Utama
+### **Storage Structure**
+```
+lms/
+├── course-images/     # Course thumbnails
+├── lesson-materials/  # Lesson files
+├── cv/               # User CV files
+└── photos/           # User profile photos
+```
 
-### Untuk Student
-- ✅ Register dan login dengan email
-- ✅ Browse dan view kursus
-- ✅ Dashboard pembelajaran
-- ✅ Profile management
-- ✅ Progress tracking (dalam pengembangan)
+### **Catatan Penting**
+- **Per 12 Juli 2024:** Semua file upload (CV, foto, course images, lesson materials) kini 100% disimpan di Cloudinary.
+- **Tidak ada lagi file upload di folder backend/uploads/**
+- **Akses file langsung dari URL Cloudinary di frontend/backend**
 
-### Untuk Teacher
-- ✅ Login dengan akun yang dibuat admin
-- ✅ Buat dan kelola kursus
-- ✅ Upload konten pelajaran
-- ✅ Monitor progress siswa
-- ✅ Dashboard teacher
+### **Features**
+- ✅ **Auto-optimization**: Images resized & compressed
+- ✅ **CDN**: Global content delivery
+- ✅ **Transformations**: Real-time image manipulation
+- ✅ **Security**: HTTPS, signed URLs
+- ✅ **Cost-effective**: Free tier 25GB storage
 
-### Untuk Admin
-- ✅ Login dengan akun admin
-- ✅ Manajemen user dan role (create teacher/student)
-- ✅ User management interface
-- ✅ Student management interface
-- ✅ Platform management
-- ✅ Full access control
+## 🚀 Features
 
-## 🛠️ Teknologi
+### **User Management**
+- ✅ User registration & authentication
+- ✅ Role-based access (Student, Mentor, Admin)
+- ✅ Profile management (CV, photo upload)
+- ✅ JWT authentication
 
-### Backend
-- **Node.js** - Runtime environment
-- **Express.js** - Web framework
-- **MongoDB** - Database
-- **Mongoose** - ODM
-- **JWT** - Authentication
-- **bcryptjs** - Password hashing
-- **express-validator** - Input validation
+### **Course Management**
+- ✅ Create, edit, delete courses
+- ✅ Course enrollment system
+- ✅ Course categories & levels
+- ✅ Course ratings & reviews
+- ✅ Course thumbnails (Cloudinary)
 
-### Frontend
-- **React 18** - UI library
-- **React Router** - Client-side routing
-- **Tailwind CSS** - Styling framework
-- **Axios** - HTTP client
-- **React Context** - State management
-- **Lucide React** - Icons
-- **React Hot Toast** - Notifications
+### **Lesson Management**
+- ✅ Create, edit, delete lessons
+- ✅ Rich content editor (HTML/Markdown)
+- ✅ File attachments (Cloudinary)
+- ✅ Video integration
+- ✅ Quiz system
 
-## 📁 Struktur Proyek
+### **File Upload System**
+- ✅ **Cloudinary Integration**
+- ✅ Course images (auto-optimized)
+- ✅ Lesson materials (PDF, DOC, PPT, etc.)
+- ✅ User CV upload (PDF only)
+- ✅ User photo upload (auto-resize)
+- ✅ Automatic file cleanup
+
+### **Security Features**
+- ✅ **Path Traversal Protection**
+- ✅ **XSS Prevention** (DOMPurify)
+- ✅ **Input Validation**
+- ✅ **File Type Validation**
+- ✅ **Authentication & Authorization**
+
+## 📁 Project Structure
 
 ```
 lms-app/
-├── backend/                 # Backend API
+├── backend/
 │   ├── src/
-│   │   ├── controllers/     # Route controllers
-│   │   ├── middlewares/     # Custom middlewares
-│   │   ├── models/          # Database models
-│   │   ├── routes/          # API routes
-│   │   └── server.js        # Main server file
-│   ├── package.json
-│   └── README.md
-├── frontend/                # Frontend React app
+│   │   ├── config/
+│   │   │   └── cloudinary.js      # Cloudinary config
+│   │   ├── controllers/
+│   │   ├── middlewares/
+│   │   │   └── auth.js           # JWT auth
+│   │   ├── models/
+│   │   ├── routes/
+│   │   │   ├── upload.js         # File upload (Cloudinary)
+│   │   │   ├── courses.js        # Course management
+│   │   │   └── lessons.js        # Lesson management
+│   │   └── server.js
+│   └── package.json
+├── frontend/
 │   ├── src/
-│   │   ├── components/      # Reusable components
-│   │   ├── pages/           # Page components
-│   │   ├── utils/           # Utility functions
-│   │   └── assets/          # Static assets
-│   ├── package.json
-│   └── README.md
+│   │   ├── components/
+│   │   │   └── FileUpload.js     # Upload component
+│   │   ├── pages/
+│   │   │   ├── LessonDetail.js   # Lesson view
+│   │   │   └── LessonManagement.js
+│   │   └── utils/
+│   │       ├── api.js           # API calls
+│   │       └── imageUtils.js    # Image handling
+│   └── package.json
 └── README.md
 ```
 
-## 🚀 Instalasi
+## 🛠️ Setup
 
-### Prerequisites
-- Node.js (v16 atau lebih baru)
-- MongoDB (v4.4 atau lebih baru)
-- npm atau yarn
+### **Prerequisites**
+- Node.js (v16+)
+- MongoDB Atlas account
+- Cloudinary account
 
-### Backend Setup
+### **Backend Setup**
+```bash
+cd backend
+npm install
+```
 
-1. Masuk ke direktori backend:
-   ```bash
-   cd backend
-   ```
+### **Environment Variables**
+```env
+# Database
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/lms-app
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+# JWT
+JWT_SECRET=your-super-secret-jwt-key
 
-3. Buat file `.env` berdasarkan `env.example`:
-   ```bash
-   cp env.example .env
-   ```
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 
-4. Konfigurasi environment variables di `.env`:
-   ```env
-   MONGODB_URI=mongodb://localhost:27017/lms-app
-   JWT_SECRET=your-super-secret-jwt-key-here
-   JWT_EXPIRE=24h
-   PORT=5000
-   NODE_ENV=development
-   ```
+# Server
+PORT=5000
+FRONTEND_URL=http://localhost:3000
+```
 
-5. Jalankan server:
-   ```bash
-   # Development
-   npm run dev
-   
-   # Production
-   npm start
-   ```
+### **Frontend Setup**
+```bash
+cd frontend
+npm install
+```
 
-### Frontend Setup
+## 🚀 Running the App
 
-1. Masuk ke direktori frontend:
-   ```bash
-   cd frontend
-   ```
+### **Development**
+```bash
+# Backend
+cd backend
+npm run dev
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+# Frontend
+cd frontend
+npm start
+```
 
-3. Buat file `.env`:
-   ```env
-   REACT_APP_API_URL=http://localhost:5000/api
-   ```
+### **Production**
+```bash
+# Backend
+cd backend
+npm start
 
-4. Jalankan development server:
-   ```bash
-   npm start
-   ```
+# Frontend
+cd frontend
+npm run build
+```
 
-## 📖 API Documentation
+## 🔒 Security
 
-### Authentication
-- `POST /api/auth/register` - Register student baru (student only)
-- `POST /api/auth/login` - Login user
-- `GET /api/auth/me` - Get current user
-- `POST /api/auth/logout`
+### **Implemented Security Measures**
+- ✅ **Path Traversal Protection**: Secure file serving
+- ✅ **XSS Prevention**: HTML sanitization (DOMPurify)
+- ✅ **Input Validation**: Express-validator
+- ✅ **Authentication**: JWT tokens
+- ✅ **Authorization**: Role-based access control
+- ✅ **File Validation**: Type & size limits
+
+## 📈 Performance
+
+### **Optimizations**
+- ✅ **Cloudinary CDN**: Fast global delivery
+- ✅ **Image Optimization**: Auto-resize & compression
+- ✅ **Database Indexing**: MongoDB Atlas
+- ✅ **Caching**: Browser & CDN caching
+
+## 🔄 Recent Updates
+
+### **12 Juli 2024**
+- ✅ **Cloudinary Migration**: File storage moved to cloud
+- ✅ **Security Enhancements**: Path traversal & XSS fixes
+- ✅ **Performance**: CDN & auto-optimization
+- ✅ **Architecture**: Full cloud infrastructure
+
+### **11 Juli 2024**
+- ✅ **Security Fixes**: Path traversal & XSS vulnerabilities
+- ✅ **Dependencies**: Added DOMPurify & JSDOM
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch
+3. Commit changes
+4. Push to branch
+5. Create Pull Request
+
+## 📝 License
+
+MIT License - see LICENSE file for details
+
+## 🆘 Support
+
+For support, email support@lms-app.com or create an issue.

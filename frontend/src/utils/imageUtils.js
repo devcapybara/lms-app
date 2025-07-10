@@ -8,14 +8,14 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return null;
   
-  // If it's a local upload path, add server URL
-  if (imagePath.startsWith('/uploads/')) {
-    return `${API_BASE_URL}${imagePath}`;
-  }
-  
-  // If it's already a full URL, return as is
+  // If it's already a full URL (Cloudinary or external), return as is
   if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
     return imagePath;
+  }
+  
+  // If it's a local upload path (legacy), add server URL
+  if (imagePath.startsWith('/uploads/')) {
+    return `${API_BASE_URL}${imagePath}`;
   }
   
   // If it's a relative path, assume it's local
@@ -23,13 +23,23 @@ export const getImageUrl = (imagePath) => {
 };
 
 /**
- * Check if image URL is external
+ * Check if image URL is external (Cloudinary or other CDN)
  * @param {string} imagePath - Image path from database
  * @returns {boolean} - True if external URL
  */
 export const isExternalImage = (imagePath) => {
   if (!imagePath) return false;
   return imagePath.startsWith('http://') || imagePath.startsWith('https://');
+};
+
+/**
+ * Check if image is from Cloudinary
+ * @param {string} imagePath - Image path from database
+ * @returns {boolean} - True if Cloudinary URL
+ */
+export const isCloudinaryImage = (imagePath) => {
+  if (!imagePath) return false;
+  return imagePath.includes('cloudinary.com');
 };
 
 /**
@@ -53,7 +63,7 @@ export const getImageFilename = (imagePath) => {
 export const isValidImageUrl = (imagePath) => {
   if (!imagePath) return false;
   
-  // Check if it's a valid URL or local path
+  // Check if it's a valid URL (Cloudinary or external) or local path
   const urlPattern = /^https?:\/\/.+/;
   const localPathPattern = /^\/uploads\/.+/;
   

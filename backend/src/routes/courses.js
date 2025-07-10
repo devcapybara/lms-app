@@ -2,23 +2,22 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const Course = require('../models/Course');
 const User = require('../models/User');
-const { auth, authorize } = require('../middlewares/auth');
-const multer = require('multer');
-const path = require('path');
 const Enrollment = require('../models/Enrollment');
+const { auth, authorize } = require('../middlewares/auth');
+const { uploadCourseImage, cloudinary } = require('../config/cloudinary');
 
 const router = express.Router();
 
-// Multer setup
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname));
+// Error handling middleware for upload
+const handleUploadError = (err, req, res, next) => {
+  if (err) {
+    console.error('Upload error:', err);
+    return res.status(400).json({ 
+      message: err.message || 'Upload failed' 
+    });
   }
-});
-const upload = multer({ storage });
+  next();
+};
 
 // Get all published courses
 router.get('/', async (req, res) => {
@@ -81,7 +80,7 @@ router.post('/', auth, authorize('mentor', 'admin'), [
   body('level').optional().isIn(['beginner', 'intermediate', 'advanced']).withMessage('Level tidak valid'),
   body('price').optional().isNumeric().withMessage('Harga harus berupa angka'),
   body('tags').optional().isArray().withMessage('Tags harus berupa array')
-], upload.single('imageFile'), async (req, res) => {
+], uploadCourseImage, handleUploadError, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -94,7 +93,7 @@ router.post('/', auth, authorize('mentor', 'admin'), [
     // Handle thumbnail: file upload or URL
     let thumbnail = '';
     if (req.file) {
-      thumbnail = `/uploads/${req.file.filename}`;
+      thumbnail = req.file.path; // Cloudinary URL
     } else if (req.body.thumbnail) {
       thumbnail = req.body.thumbnail;
     }

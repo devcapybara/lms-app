@@ -1,317 +1,161 @@
-# File Upload System - LMS App
+# File Upload Guide
 
 ## Overview
+LMS App menggunakan **Cloudinary** untuk file storage. Semua file upload (CV, foto, materi pelajaran, course images) disimpan di cloud dengan otomatis optimization.
 
-Sistem file upload yang komprehensif untuk LMS app yang memungkinkan upload dan manajemen file untuk lesson materials dan course thumbnails.
+## Architecture
 
-## Fitur yang Diimplementasikan
+### File Storage
+- **Service**: Cloudinary
+- **Location**: `backend/src/config/cloudinary.js`
+- **Benefits**: 
+  - Otomatis image optimization
+  - CDN global
+  - Transformasi gambar real-time
+  - Backup otomatis
 
-### ✅ **Backend Features**
+### File Types & Storage
 
-#### 1. **File Upload Middleware**
-- **Location**: `backend/src/middlewares/upload.js`
-- **Fitur**:
-  - Upload course images (thumbnails)
-  - Upload lesson materials (PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, Images)
-  - File validation (type, size)
-  - Unique filename generation
-  - Organized directory structure
+#### 1. Course Images
+- **Storage**: `lms/course-images/` (Cloudinary)
+- **Formats**: jpg, jpeg, png, gif, webp
+- **Transformations**: 
+  - Resize: 800x600
+  - Quality: auto
+- **Usage**: Course thumbnails
 
-#### 2. **Upload Routes**
-- **Location**: `backend/src/routes/upload.js`
-- **Endpoints**:
-  - `POST /api/upload/course-image` - Upload course thumbnail
-  - `POST /api/upload/lesson-materials` - Upload lesson materials
-  - `GET /api/upload/lesson-materials/:filename` - Download file
-  - `GET /api/upload/lesson-materials/:filename/preview` - Preview file (PDF, images)
-  - `DELETE /api/upload/lesson-materials/:filename` - Delete file
+#### 2. Lesson Materials
+- **Storage**: `lms/lesson-materials/` (Cloudinary)
+- **Formats**: pdf, doc, docx, ppt, pptx, xls, xlsx, txt, jpg, jpeg, png, gif
+- **Usage**: Course materials, documents
 
-#### 3. **Lesson Attachments API**
-- **Location**: `backend/src/routes/lessons.js`
-- **Endpoints**:
-  - `POST /api/lessons/:id/attachments` - Add attachments to lesson
-  - `DELETE /api/lessons/:id/attachments/:filename` - Remove attachment
-  - `PUT /api/lessons/:id/attachments` - Update lesson attachments
+#### 3. User CV
+- **Storage**: `lms/cv/` (Cloudinary)
+- **Formats**: pdf only
+- **Usage**: User CV/portfolio
 
-#### 4. **Database Schema**
-- **Lesson Model**: Sudah memiliki field `attachments` dengan struktur:
-  ```javascript
-  attachments: [{
-    filename: String,
-    originalName: String,
-    path: String,
-    size: Number,
-    mimeType: String
-  }]
-  ```
+#### 4. User Photos
+- **Storage**: `lms/photos/` (Cloudinary)
+- **Formats**: jpg, jpeg, png, gif, webp
+- **Transformations**:
+  - Resize: 300x300 (square)
+  - Quality: auto
+- **Usage**: User profile photos
 
-### ✅ **Frontend Features**
+## API Endpoints
 
-#### 1. **FileUpload Component**
-- **Location**: `frontend/src/components/FileUpload.js`
-- **Fitur**:
-  - Drag & drop interface
-  - Multiple file upload
-  - File type validation
-  - File size validation
-  - Progress indicator
-  - File preview/download
-  - File deletion
-
-#### 2. **API Integration**
-- **Location**: `frontend/src/utils/api.js`
-- **APIs**:
-  - `uploadAPI.uploadCourseImage()` - Upload course thumbnail
-  - `uploadAPI.uploadLessonMaterials()` - Upload lesson materials
-  - `uploadAPI.getFileUrl()` - Get download URL
-  - `uploadAPI.getFilePreviewUrl()` - Get preview URL
-  - `lessonAttachmentsAPI` - Manage lesson attachments
-
-#### 3. **UI Integration**
-- **LessonManagement**: Upload materials saat create/edit lesson
-- **LessonDetail**: Display dan download attachments
-- **CreateCourse**: Upload course thumbnail
-
-## File Types Supported
-
-### Course Thumbnails
-- **Types**: JPG, JPEG, PNG, GIF
-- **Max Size**: 5MB
-- **Storage**: `/uploads/course-images/`
-
-### Lesson Materials
-- **Types**: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, JPG, JPEG, PNG, GIF
-- **Max Size**: 10MB
-- **Max Files**: 5 per lesson
-- **Storage**: `/uploads/lesson-materials/`
-
-## Directory Structure
-
-```
-backend/uploads/
-├── course-images/     # Course thumbnails
-├── lesson-materials/  # Lesson attachments
-├── cv/               # User CV files
-└── photo/            # User profile photos
-```
-
-## Usage Examples
-
-### 1. Upload Course Thumbnail
-
+### Upload Endpoints
 ```javascript
-// Frontend
+// Course Image
+POST /api/upload/course-image
+Content-Type: multipart/form-data
+Body: { courseImage: file }
+
+// Lesson Materials
+POST /api/upload/lesson-materials
+Content-Type: multipart/form-data
+Body: { lessonMaterials: [files] }
+
+// User CV
+POST /api/upload/cv
+Content-Type: multipart/form-data
+Body: { cv: file }
+
+// User Photo
+POST /api/upload/photo
+Content-Type: multipart/form-data
+Body: { photo: file }
+```
+
+### Delete Endpoints
+```javascript
+// Delete Lesson Material
+DELETE /api/upload/lesson-materials/:publicId
+
+// Delete CV
+DELETE /api/upload/cv
+
+// Delete Photo
+DELETE /api/upload/photo
+```
+
+## Frontend Integration
+
+### File Upload Component
+```javascript
 import { uploadAPI } from '../utils/api';
 
+// Upload course image
 const formData = new FormData();
 formData.append('courseImage', file);
-
 const response = await uploadAPI.uploadCourseImage(formData);
-console.log(response.data.imageUrl);
+console.log(response.data.imageUrl); // Cloudinary URL
 ```
 
-### 2. Upload Lesson Materials
-
+### File Display
 ```javascript
-// Frontend
-import { uploadAPI, lessonAttachmentsAPI } from '../utils/api';
-
-// Upload files
-const formData = new FormData();
-files.forEach(file => {
-  formData.append('lessonMaterials', file);
-});
-
-const response = await uploadAPI.uploadLessonMaterials(formData);
-
-// Add to lesson
-await lessonAttachmentsAPI.addAttachments(lessonId, response.data.files);
+// Images are served directly from Cloudinary
+<img src="https://res.cloudinary.com/cloud-name/image/upload/..." />
 ```
 
-### 3. Display Attachments
+## Environment Variables
 
-```javascript
-// Frontend - LessonDetail.js
-{lesson.attachments.map((attachment, index) => (
-  <div key={index}>
-    <a href={uploadAPI.getFileUrl(attachment.filename)} download>
-      {attachment.originalName}
-    </a>
-    {canPreview(attachment.filename) && (
-      <a href={uploadAPI.getFilePreviewUrl(attachment.filename)} target="_blank">
-        Preview
-      </a>
-    )}
-  </div>
-))}
+```env
+# Cloudinary Configuration
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
 ## Security Features
 
-### 1. **File Validation**
-- File type validation
-- File size limits
-- MIME type checking
+1. **File Type Validation**: Hanya format yang diizinkan
+2. **File Size Limits**: 
+   - Course images: 5MB
+   - Lesson materials: 10MB
+   - CV: 5MB
+   - Photos: 2MB
+3. **Automatic Cleanup**: File lama dihapus otomatis saat upload baru
+4. **Cloud Storage**: Tidak ada path traversal risk
 
-### 2. **Access Control**
-- Authentication required for uploads
-- Role-based access (teacher/admin only)
-- Course enrollment check for downloads
+## Migration from Local Storage
 
-### 3. **File Security**
-- Unique filename generation
-- Secure file paths
-- No direct file system access
-
-## Error Handling
-
-### Backend Errors
+### Before (Local)
 ```javascript
-// File too large
-{ message: 'File too large. Maximum size is 10MB for lesson materials and 5MB for images.' }
-
-// Invalid file type
-{ message: 'File type not allowed. Allowed types: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, Images' }
-
-// Too many files
-{ message: 'Too many files. Maximum 5 files allowed per lesson.' }
+// Local file path
+thumbnail: "/uploads/course-123456.jpg"
 ```
 
-### Frontend Errors
-- Toast notifications for upload errors
-- Progress indicators
-- File validation feedback
-
-## Performance Optimizations
-
-### 1. **File Streaming**
-- Direct file streaming for downloads
-- No memory buffering for large files
-
-### 2. **Efficient Storage**
-- Local file system storage
-- Organized directory structure
-- Automatic cleanup of old files
-
-### 3. **Caching**
-- Static file serving with Express
-- Browser caching for images
-
-## Future Enhancements
-
-### 1. **Cloud Storage**
-- AWS S3 integration
-- CDN for global access
-- Automatic backup
-
-### 2. **Advanced Features**
-- File compression
-- Image resizing
-- Video transcoding
-- Document preview (Google Docs style)
-
-### 3. **Security Enhancements**
-- Virus scanning
-- File encryption
-- Signed URLs
-- Rate limiting
-
-## Testing
-
-### Manual Testing Checklist
-
-- [ ] Upload course thumbnail (JPG, PNG)
-- [ ] Upload lesson materials (PDF, DOC, DOCX)
-- [ ] File size validation (5MB, 10MB limits)
-- [ ] File type validation
-- [ ] Multiple file upload (max 5)
-- [ ] File preview (PDF, images)
-- [ ] File download
-- [ ] File deletion
-- [ ] Drag & drop interface
-- [ ] Progress indicators
-- [ ] Error handling
-- [ ] Access control (teacher/admin only)
-
-### API Testing
-
-```bash
-# Upload course image
-curl -X POST http://localhost:5000/api/upload/course-image \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -F "courseImage=@image.jpg"
-
-# Upload lesson materials
-curl -X POST http://localhost:5000/api/upload/lesson-materials \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -F "lessonMaterials=@document.pdf" \
-  -F "lessonMaterials=@presentation.pptx"
-
-# Download file
-curl http://localhost:5000/api/upload/lesson-materials/filename.pdf
-
-# Preview file
-curl http://localhost:5000/api/upload/lesson-materials/filename.pdf/preview
+### After (Cloudinary)
+```javascript
+// Cloudinary URL
+thumbnail: "https://res.cloudinary.com/cloud-name/image/upload/v123456789/lms/course-images/course-123456.jpg"
 ```
+
+## Benefits of Cloudinary
+
+1. **Performance**: CDN global, fast loading
+2. **Optimization**: Auto-resize, format conversion
+3. **Reliability**: 99.9% uptime
+4. **Security**: HTTPS, signed URLs
+5. **Cost**: Free tier 25GB storage, 25GB bandwidth/month
+6. **Scalability**: Auto-scaling
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **File not uploading**
+1. **Upload Failed**
    - Check file size limits
-   - Verify file type is allowed
-   - Ensure authentication token is valid
+   - Verify file format
+   - Check Cloudinary credentials
 
-2. **File not downloading**
-   - Check file exists in uploads directory
-   - Verify file permissions
-   - Check URL path is correct
+2. **Image Not Loading**
+   - Verify Cloudinary URL format
+   - Check CORS settings
+   - Ensure file exists in Cloudinary
 
-3. **Preview not working**
-   - Only PDF and images support preview
-   - Check browser supports file type
-   - Verify Content-Type headers
-
-### Debug Commands
-
-```bash
-# Check uploads directory
-ls -la backend/uploads/
-
-# Check file permissions
-chmod 755 backend/uploads/lesson-materials/
-
-# Test file serving
-curl -I http://localhost:5000/api/upload/lesson-materials/test.pdf
-```
-
-## Dependencies
-
-### Backend
-```json
-{
-  "multer": "^1.4.5-lts.1",
-  "express": "^4.18.2"
-}
-```
-
-### Frontend
-```json
-{
-  "axios": "^1.4.0",
-  "react-hot-toast": "^2.4.1",
-  "lucide-react": "^0.263.1"
-}
-```
-
-## Conclusion
-
-Sistem file upload yang komprehensif telah berhasil diimplementasikan dengan fitur-fitur:
-
-✅ **File upload untuk lesson materials (PDF, documents)**  
-✅ **Image upload untuk course thumbnails**  
-✅ **File storage management**  
-✅ **File preview/download functionality**  
-
-Sistem ini memberikan pengalaman yang baik untuk teachers dalam mengelola materi pelajaran dan untuk students dalam mengakses materi tambahan. 
+3. **Delete Failed**
+   - Check public_id format
+   - Verify file exists
+   - Check Cloudinary permissions 

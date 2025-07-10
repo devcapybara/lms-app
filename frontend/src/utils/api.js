@@ -143,14 +143,8 @@ export const uploadAPI = {
     });
   },
 
-  // Get file URL
-  getFileUrl: (filename) => `${API_BASE_URL}/upload/lesson-materials/${filename}`,
-  
-  // Get file preview URL
-  getFilePreviewUrl: (filename) => `${API_BASE_URL}/upload/lesson-materials/${filename}/preview`,
-  
-  // Delete file
-  deleteFile: (filename) => api.delete(`/upload/lesson-materials/${filename}`),
+  // Delete file from Cloudinary
+  deleteFile: (publicId) => api.delete(`/upload/lesson-materials/${publicId}`),
 };
 
 // Lesson Attachments API

@@ -1,30 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const { uploadCourseImage, handleUploadError, uploadCv, uploadPhoto, uploadLessonMaterial } = require('../middlewares/upload');
-const path = require('path');
-const fs = require('fs');
+const { uploadCourseImage, uploadCv, uploadPhoto, uploadLessonMaterial, cloudinary } = require('../config/cloudinary');
 const User = require('../models/User');
 const { auth } = require('../middlewares/auth');
 
-// Secure path validation function to prevent path traversal attacks
-const validateAndResolvePath = (filename, baseDir) => {
-  // Normalize the filename to remove any path traversal attempts
-  const normalizedFilename = path.normalize(filename).replace(/^(\.\.[\/\\])+/, '');
-  
-  // Ensure the filename doesn't contain directory separators
-  if (normalizedFilename.includes(path.sep) || normalizedFilename.includes('/') || normalizedFilename.includes('\\')) {
-    throw new Error('Invalid filename');
+// Error handling middleware
+const handleUploadError = (err, req, res, next) => {
+  if (err) {
+    console.error('Upload error:', err);
+    return res.status(400).json({ 
+      message: err.message || 'Upload failed' 
+    });
   }
-  
-  // Resolve the full path
-  const fullPath = path.resolve(baseDir, normalizedFilename);
-  
-  // Ensure the resolved path is within the base directory
-  if (!fullPath.startsWith(path.resolve(baseDir))) {
-    throw new Error('Path traversal detected');
-  }
-  
-  return fullPath;
+  next();
 };
 
 // Upload course image
@@ -34,14 +22,12 @@ router.post('/course-image', uploadCourseImage, handleUploadError, (req, res) =>
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    // Generate URL for the uploaded file
-    const imageUrl = `/uploads/course-images/${req.file.filename}`;
-    
     res.json({
       success: true,
       message: 'Image uploaded successfully',
-      imageUrl: imageUrl,
-      filename: req.file.filename
+      imageUrl: req.file.path,
+      filename: req.file.filename,
+      publicId: req.file.filename
     });
   } catch (error) {
     console.error('Upload error:', error);
@@ -55,35 +41,28 @@ router.post('/cv', auth, uploadCv, handleUploadError, async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
-    const cvPath = `/uploads/cv/${req.file.filename}`;
-    // Cari user login
+
     const user = await User.findById(req.user._id);
     if (!user) {
-      // Hapus file baru jika user tidak ditemukan
-      fs.unlinkSync(path.join(__dirname, '../../', cvPath));
+      // Delete uploaded file if user not found
+      await cloudinary.uploader.destroy(req.file.filename);
       return res.status(404).json({ message: 'User tidak ditemukan' });
     }
-    // Hapus file CV lama jika ada
-    if (user.cv && user.cv.startsWith('/uploads/cv/')) {
-      try {
-        const cvFilename = user.cv.replace('/uploads/cv/', '');
-        const cvBaseDir = path.join(__dirname, '../../uploads/cv');
-        const oldPath = validateAndResolvePath(cvFilename, cvBaseDir);
-        if (fs.existsSync(oldPath)) {
-          fs.unlinkSync(oldPath);
-        }
-      } catch (error) {
-        console.error('Error deleting old CV file:', error);
-        // Continue with upload even if old file deletion fails
-      }
+
+    // Delete old CV if exists
+    if (user.cv && user.cv.includes('cloudinary')) {
+      const oldPublicId = user.cv.split('/').pop().split('.')[0];
+      await cloudinary.uploader.destroy(oldPublicId);
     }
-    // Update path CV user
-    user.cv = cvPath;
+
+    // Update user CV
+    user.cv = req.file.path;
     await user.save();
+
     res.json({
       success: true,
       message: 'CV uploaded successfully',
-      cvPath,
+      cvPath: req.file.path,
       filename: req.file.filename
     });
   } catch (error) {
@@ -98,35 +77,28 @@ router.post('/photo', auth, uploadPhoto, handleUploadError, async (req, res) => 
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
-    const photoPath = `/uploads/photo/${req.file.filename}`;
-    // Cari user login
+
     const user = await User.findById(req.user._id);
     if (!user) {
-      // Hapus file baru jika user tidak ditemukan
-      fs.unlinkSync(path.join(__dirname, '../../', photoPath));
+      // Delete uploaded file if user not found
+      await cloudinary.uploader.destroy(req.file.filename);
       return res.status(404).json({ message: 'User tidak ditemukan' });
     }
-    // Hapus file foto lama jika ada
-    if (user.photo && user.photo.startsWith('/uploads/photo/')) {
-      try {
-        const photoFilename = user.photo.replace('/uploads/photo/', '');
-        const photoBaseDir = path.join(__dirname, '../../uploads/photo');
-        const oldPath = validateAndResolvePath(photoFilename, photoBaseDir);
-        if (fs.existsSync(oldPath)) {
-          fs.unlinkSync(oldPath);
-        }
-      } catch (error) {
-        console.error('Error deleting old photo file:', error);
-        // Continue with upload even if old file deletion fails
-      }
+
+    // Delete old photo if exists
+    if (user.photo && user.photo.includes('cloudinary')) {
+      const oldPublicId = user.photo.split('/').pop().split('.')[0];
+      await cloudinary.uploader.destroy(oldPublicId);
     }
-    // Update path photo user
-    user.photo = photoPath;
+
+    // Update user photo
+    user.photo = req.file.path;
     await user.save();
+
     res.json({
       success: true,
       message: 'Photo uploaded successfully',
-      photoPath,
+      photoPath: req.file.path,
       filename: req.file.filename
     });
   } catch (error) {
@@ -145,9 +117,10 @@ router.post('/lesson-materials', auth, uploadLessonMaterial, handleUploadError, 
     const uploadedFiles = req.files.map(file => ({
       filename: file.filename,
       originalName: file.originalname,
-      path: `/uploads/lesson-materials/${file.filename}`,
+      path: file.path,
       size: file.size,
-      mimeType: file.mimetype
+      mimeType: file.mimetype,
+      publicId: file.filename
     }));
 
     res.json({
@@ -161,119 +134,13 @@ router.post('/lesson-materials', auth, uploadLessonMaterial, handleUploadError, 
   }
 });
 
-// Get image by filename
-router.get('/course-images/:filename', (req, res) => {
-  try {
-    const filename = req.params.filename;
-    const baseDir = path.join(__dirname, '../../uploads/course-images');
-    
-    // Validate and resolve the path securely
-    const imagePath = validateAndResolvePath(filename, baseDir);
-    
-    res.sendFile(imagePath, (err) => {
-      if (err) {
-        res.status(404).json({ message: 'Image not found' });
-      }
-    });
-  } catch (error) {
-    console.error('Image serve error:', error);
-    if (error.message === 'Invalid filename' || error.message === 'Path traversal detected') {
-      return res.status(400).json({ message: 'Invalid filename' });
-    }
-    res.status(500).json({ message: 'Failed to serve image' });
-  }
-});
-
-// Get lesson material by filename
-router.get('/lesson-materials/:filename', (req, res) => {
-  try {
-    const filename = req.params.filename;
-    const baseDir = path.join(__dirname, '../../uploads/lesson-materials');
-    
-    // Validate and resolve the path securely
-    const filePath = validateAndResolvePath(filename, baseDir);
-    
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ message: 'File not found' });
-    }
-
-    // Get file stats
-    const stats = fs.statSync(filePath);
-    
-    // Set appropriate headers
-    res.setHeader('Content-Length', stats.size);
-    res.setHeader('Content-Type', 'application/octet-stream');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    
-    // Stream the file
-    const fileStream = fs.createReadStream(filePath);
-    fileStream.pipe(res);
-  } catch (error) {
-    console.error('File serve error:', error);
-    if (error.message === 'Invalid filename' || error.message === 'Path traversal detected') {
-      return res.status(400).json({ message: 'Invalid filename' });
-    }
-    res.status(500).json({ message: 'Failed to serve file' });
-  }
-});
-
-// Preview lesson material (for images and PDFs)
-router.get('/lesson-materials/:filename/preview', (req, res) => {
-  try {
-    const filename = req.params.filename;
-    const baseDir = path.join(__dirname, '../../uploads/lesson-materials');
-    
-    // Validate and resolve the path securely
-    const filePath = validateAndResolvePath(filename, baseDir);
-    
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ message: 'File not found' });
-    }
-
-    // Get file extension
-    const ext = path.extname(filename).toLowerCase();
-    
-    // Only allow preview for images and PDFs
-    if (ext === '.pdf') {
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'inline');
-    } else if (['.jpg', '.jpeg', '.png', '.gif'].includes(ext)) {
-      res.setHeader('Content-Type', `image/${ext.slice(1)}`);
-      res.setHeader('Content-Disposition', 'inline');
-    } else {
-      return res.status(400).json({ message: 'Preview not available for this file type' });
-    }
-    
-    // Stream the file
-    const fileStream = fs.createReadStream(filePath);
-    fileStream.pipe(res);
-  } catch (error) {
-    console.error('File preview error:', error);
-    if (error.message === 'Invalid filename' || error.message === 'Path traversal detected') {
-      return res.status(400).json({ message: 'Invalid filename' });
-    }
-    res.status(500).json({ message: 'Failed to preview file' });
-  }
-});
-
 // Delete lesson material
-router.delete('/lesson-materials/:filename', auth, (req, res) => {
+router.delete('/lesson-materials/:publicId', auth, async (req, res) => {
   try {
-    const filename = req.params.filename;
-    const baseDir = path.join(__dirname, '../../uploads/lesson-materials');
+    const { publicId } = req.params;
     
-    // Validate and resolve the path securely
-    const filePath = validateAndResolvePath(filename, baseDir);
-    
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ message: 'File not found' });
-    }
-
-    // Delete the file
-    fs.unlinkSync(filePath);
+    // Delete from Cloudinary
+    await cloudinary.uploader.destroy(publicId);
     
     res.json({
       success: true,
@@ -281,9 +148,6 @@ router.delete('/lesson-materials/:filename', auth, (req, res) => {
     });
   } catch (error) {
     console.error('File delete error:', error);
-    if (error.message === 'Invalid filename' || error.message === 'Path traversal detected') {
-      return res.status(400).json({ message: 'Invalid filename' });
-    }
     res.status(500).json({ message: 'Failed to delete file' });
   }
 });
@@ -296,18 +160,9 @@ router.delete('/cv', auth, async (req, res) => {
       return res.status(404).json({ message: 'User tidak ditemukan' });
     }
 
-    if (user.cv && user.cv.startsWith('/uploads/cv/')) {
-      try {
-        const cvFilename = user.cv.replace('/uploads/cv/', '');
-        const cvBaseDir = path.join(__dirname, '../../uploads/cv');
-        const filePath = validateAndResolvePath(cvFilename, cvBaseDir);
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
-      } catch (error) {
-        console.error('Error deleting CV file:', error);
-        // Continue with deletion even if file operation fails
-      }
+    if (user.cv && user.cv.includes('cloudinary')) {
+      const publicId = user.cv.split('/').pop().split('.')[0];
+      await cloudinary.uploader.destroy(publicId);
       user.cv = null;
       await user.save();
     }
@@ -330,18 +185,9 @@ router.delete('/photo', auth, async (req, res) => {
       return res.status(404).json({ message: 'User tidak ditemukan' });
     }
 
-    if (user.photo && user.photo.startsWith('/uploads/photo/')) {
-      try {
-        const photoFilename = user.photo.replace('/uploads/photo/', '');
-        const photoBaseDir = path.join(__dirname, '../../uploads/photo');
-        const filePath = validateAndResolvePath(photoFilename, photoBaseDir);
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
-      } catch (error) {
-        console.error('Error deleting photo file:', error);
-        // Continue with deletion even if file operation fails
-      }
+    if (user.photo && user.photo.includes('cloudinary')) {
+      const publicId = user.photo.split('/').pop().split('.')[0];
+      await cloudinary.uploader.destroy(publicId);
       user.photo = null;
       await user.save();
     }

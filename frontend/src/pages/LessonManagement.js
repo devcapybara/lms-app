@@ -16,6 +16,7 @@ import {
 import { toast } from 'react-hot-toast';
 import { courseAPI, lessonAPI, lessonAttachmentsAPI } from '../utils/api';
 import FileUpload from '../components/FileUpload';
+import DOMPurify from 'dompurify';
 
 export default function LessonManagement() {
   const { courseId } = useParams();
@@ -68,6 +69,7 @@ export default function LessonManagement() {
     try {
       const lessonData = {
         ...formData,
+        content: DOMPurify.sanitize(formData.content),
         course: courseId,
         quiz: quizData
       };
@@ -93,6 +95,7 @@ export default function LessonManagement() {
     try {
       const lessonData = {
         ...formData,
+        content: DOMPurify.sanitize(formData.content),
         quiz: quizData
       };
       

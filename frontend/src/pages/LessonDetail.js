@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { lessonAPI } from '../utils/api';
+import DOMPurify from 'dompurify';
 
 export default function LessonDetail() {
   const { id } = useParams();
@@ -191,7 +192,7 @@ export default function LessonDetail() {
           </h3>
           <div 
             className="prose prose-invert max-w-none"
-            dangerouslySetInnerHTML={{ __html: lesson.content }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(lesson.content) }}
           />
         </div>
 

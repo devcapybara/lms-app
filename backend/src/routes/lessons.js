@@ -3,6 +3,12 @@ const { body, validationResult } = require('express-validator');
 const Lesson = require('../models/Lesson');
 const Course = require('../models/Course');
 const { auth, authorize } = require('../middlewares/auth');
+// Tambahkan import dompurify dan jsdom
+const createDOMPurify = require('dompurify');
+const { JSDOM } = require('jsdom');
+
+const window = new JSDOM('').window;
+const DOMPurify = createDOMPurify(window);
 
 const router = express.Router();
 
@@ -86,6 +92,11 @@ router.post('/', auth, authorize('mentor', 'admin'), [
       return res.status(403).json({ message: 'Anda tidak memiliki izin untuk menambah pelajaran di kursus ini' });
     }
 
+    // Sanitasi konten
+    if (req.body.content) {
+      req.body.content = DOMPurify.sanitize(req.body.content);
+    }
+
     const lesson = new Lesson(req.body);
     await lesson.save();
 
@@ -131,6 +142,11 @@ router.put('/:id', auth, [
     // Check if user is the instructor or admin
     if (lesson.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Anda tidak memiliki izin untuk mengedit pelajaran ini' });
+    }
+
+    // Sanitasi konten
+    if (req.body.content) {
+      req.body.content = DOMPurify.sanitize(req.body.content);
     }
 
     const updatedLesson = await Lesson.findByIdAndUpdate(

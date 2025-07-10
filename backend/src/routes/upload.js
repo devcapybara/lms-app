@@ -6,6 +6,27 @@ const fs = require('fs');
 const User = require('../models/User');
 const { auth } = require('../middlewares/auth');
 
+// Secure path validation function to prevent path traversal attacks
+const validateAndResolvePath = (filename, baseDir) => {
+  // Normalize the filename to remove any path traversal attempts
+  const normalizedFilename = path.normalize(filename).replace(/^(\.\.[\/\\])+/, '');
+  
+  // Ensure the filename doesn't contain directory separators
+  if (normalizedFilename.includes(path.sep) || normalizedFilename.includes('/') || normalizedFilename.includes('\\')) {
+    throw new Error('Invalid filename');
+  }
+  
+  // Resolve the full path
+  const fullPath = path.resolve(baseDir, normalizedFilename);
+  
+  // Ensure the resolved path is within the base directory
+  if (!fullPath.startsWith(path.resolve(baseDir))) {
+    throw new Error('Path traversal detected');
+  }
+  
+  return fullPath;
+};
+
 // Upload course image
 router.post('/course-image', uploadCourseImage, handleUploadError, (req, res) => {
   try {
@@ -44,9 +65,16 @@ router.post('/cv', auth, uploadCv, handleUploadError, async (req, res) => {
     }
     // Hapus file CV lama jika ada
     if (user.cv && user.cv.startsWith('/uploads/cv/')) {
-      const oldPath = path.join(__dirname, '../../', user.cv);
-      if (fs.existsSync(oldPath)) {
-        fs.unlinkSync(oldPath);
+      try {
+        const cvFilename = user.cv.replace('/uploads/cv/', '');
+        const cvBaseDir = path.join(__dirname, '../../uploads/cv');
+        const oldPath = validateAndResolvePath(cvFilename, cvBaseDir);
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      } catch (error) {
+        console.error('Error deleting old CV file:', error);
+        // Continue with upload even if old file deletion fails
       }
     }
     // Update path CV user
@@ -80,9 +108,16 @@ router.post('/photo', auth, uploadPhoto, handleUploadError, async (req, res) => 
     }
     // Hapus file foto lama jika ada
     if (user.photo && user.photo.startsWith('/uploads/photo/')) {
-      const oldPath = path.join(__dirname, '../../', user.photo);
-      if (fs.existsSync(oldPath)) {
-        fs.unlinkSync(oldPath);
+      try {
+        const photoFilename = user.photo.replace('/uploads/photo/', '');
+        const photoBaseDir = path.join(__dirname, '../../uploads/photo');
+        const oldPath = validateAndResolvePath(photoFilename, photoBaseDir);
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      } catch (error) {
+        console.error('Error deleting old photo file:', error);
+        // Continue with upload even if old file deletion fails
       }
     }
     // Update path photo user
@@ -130,7 +165,10 @@ router.post('/lesson-materials', auth, uploadLessonMaterial, handleUploadError, 
 router.get('/course-images/:filename', (req, res) => {
   try {
     const filename = req.params.filename;
-    const imagePath = path.join(__dirname, '../../uploads/course-images', filename);
+    const baseDir = path.join(__dirname, '../../uploads/course-images');
+    
+    // Validate and resolve the path securely
+    const imagePath = validateAndResolvePath(filename, baseDir);
     
     res.sendFile(imagePath, (err) => {
       if (err) {
@@ -139,6 +177,9 @@ router.get('/course-images/:filename', (req, res) => {
     });
   } catch (error) {
     console.error('Image serve error:', error);
+    if (error.message === 'Invalid filename' || error.message === 'Path traversal detected') {
+      return res.status(400).json({ message: 'Invalid filename' });
+    }
     res.status(500).json({ message: 'Failed to serve image' });
   }
 });
@@ -147,7 +188,10 @@ router.get('/course-images/:filename', (req, res) => {
 router.get('/lesson-materials/:filename', (req, res) => {
   try {
     const filename = req.params.filename;
-    const filePath = path.join(__dirname, '../../uploads/lesson-materials', filename);
+    const baseDir = path.join(__dirname, '../../uploads/lesson-materials');
+    
+    // Validate and resolve the path securely
+    const filePath = validateAndResolvePath(filename, baseDir);
     
     // Check if file exists
     if (!fs.existsSync(filePath)) {
@@ -167,6 +211,9 @@ router.get('/lesson-materials/:filename', (req, res) => {
     fileStream.pipe(res);
   } catch (error) {
     console.error('File serve error:', error);
+    if (error.message === 'Invalid filename' || error.message === 'Path traversal detected') {
+      return res.status(400).json({ message: 'Invalid filename' });
+    }
     res.status(500).json({ message: 'Failed to serve file' });
   }
 });
@@ -175,7 +222,10 @@ router.get('/lesson-materials/:filename', (req, res) => {
 router.get('/lesson-materials/:filename/preview', (req, res) => {
   try {
     const filename = req.params.filename;
-    const filePath = path.join(__dirname, '../../uploads/lesson-materials', filename);
+    const baseDir = path.join(__dirname, '../../uploads/lesson-materials');
+    
+    // Validate and resolve the path securely
+    const filePath = validateAndResolvePath(filename, baseDir);
     
     // Check if file exists
     if (!fs.existsSync(filePath)) {
@@ -201,6 +251,9 @@ router.get('/lesson-materials/:filename/preview', (req, res) => {
     fileStream.pipe(res);
   } catch (error) {
     console.error('File preview error:', error);
+    if (error.message === 'Invalid filename' || error.message === 'Path traversal detected') {
+      return res.status(400).json({ message: 'Invalid filename' });
+    }
     res.status(500).json({ message: 'Failed to preview file' });
   }
 });
@@ -209,7 +262,10 @@ router.get('/lesson-materials/:filename/preview', (req, res) => {
 router.delete('/lesson-materials/:filename', auth, (req, res) => {
   try {
     const filename = req.params.filename;
-    const filePath = path.join(__dirname, '../../uploads/lesson-materials', filename);
+    const baseDir = path.join(__dirname, '../../uploads/lesson-materials');
+    
+    // Validate and resolve the path securely
+    const filePath = validateAndResolvePath(filename, baseDir);
     
     // Check if file exists
     if (!fs.existsSync(filePath)) {
@@ -225,6 +281,9 @@ router.delete('/lesson-materials/:filename', auth, (req, res) => {
     });
   } catch (error) {
     console.error('File delete error:', error);
+    if (error.message === 'Invalid filename' || error.message === 'Path traversal detected') {
+      return res.status(400).json({ message: 'Invalid filename' });
+    }
     res.status(500).json({ message: 'Failed to delete file' });
   }
 });
@@ -238,9 +297,16 @@ router.delete('/cv', auth, async (req, res) => {
     }
 
     if (user.cv && user.cv.startsWith('/uploads/cv/')) {
-      const filePath = path.join(__dirname, '../../', user.cv);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      try {
+        const cvFilename = user.cv.replace('/uploads/cv/', '');
+        const cvBaseDir = path.join(__dirname, '../../uploads/cv');
+        const filePath = validateAndResolvePath(cvFilename, cvBaseDir);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (error) {
+        console.error('Error deleting CV file:', error);
+        // Continue with deletion even if file operation fails
       }
       user.cv = null;
       await user.save();
@@ -265,9 +331,16 @@ router.delete('/photo', auth, async (req, res) => {
     }
 
     if (user.photo && user.photo.startsWith('/uploads/photo/')) {
-      const filePath = path.join(__dirname, '../../', user.photo);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      try {
+        const photoFilename = user.photo.replace('/uploads/photo/', '');
+        const photoBaseDir = path.join(__dirname, '../../uploads/photo');
+        const filePath = validateAndResolvePath(photoFilename, photoBaseDir);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (error) {
+        console.error('Error deleting photo file:', error);
+        // Continue with deletion even if file operation fails
       }
       user.photo = null;
       await user.save();

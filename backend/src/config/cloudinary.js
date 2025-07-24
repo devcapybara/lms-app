@@ -52,16 +52,30 @@ const photoStorage = new CloudinaryStorage({
   },
 });
 
+const logoStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'lms/branding',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico'],
+    transformation: [
+      { width: 500, height: 200, crop: 'fit' },
+      { quality: 'auto' }
+    ]
+  },
+});
+
 // Create multer instances
 const uploadCourseImage = multer({ storage: courseImageStorage }).single('courseImage');
 const uploadLessonMaterial = multer({ storage: lessonMaterialStorage }).array('lessonMaterials', 5);
 const uploadCv = multer({ storage: cvStorage }).single('cv');
 const uploadPhoto = multer({ storage: photoStorage }).single('photo');
+const uploadLogo = multer({ storage: logoStorage }).single('logo');
 
 module.exports = {
   cloudinary,
   uploadCourseImage,
   uploadLessonMaterial,
   uploadCv,
-  uploadPhoto
-}; 
+  uploadPhoto,
+  uploadLogo
+};

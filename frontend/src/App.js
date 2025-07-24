@@ -11,12 +11,17 @@ import Courses from './pages/Courses';
 import CourseDetail from './pages/CourseDetail';
 import LessonDetail from './pages/LessonDetail';
 import Dashboard from './pages/Dashboard';
+import DebugRoles from './pages/DebugRoles';
 import Profile from './pages/Profile';
 import CreateCourse from './pages/CreateCourse';
 import EditCourse from './pages/EditCourse';
 import Users from './pages/Users';
 import AdminUsers from './pages/AdminUsers';
 import LessonManagement from './pages/LessonManagement';
+import PlatformSettings from './pages/Admin/PlatformSettings';
+import EnrollmentManagement from './pages/Admin/EnrollmentManagement';
+import APITest from './components/APITest';
+import LoginTest from './components/LoginTest';
 
 function App() {
   return (
@@ -45,6 +50,11 @@ function App() {
           <Route path="dashboard" element={
             <PrivateRoute>
               <Dashboard />
+            </PrivateRoute>
+          } />
+          <Route path="debug/roles" element={
+            <PrivateRoute>
+              <DebugRoles />
             </PrivateRoute>
           } />
           <Route path="profile" element={
@@ -82,10 +92,22 @@ function App() {
               <LessonManagement />
             </PrivateRoute>
           } />
+          <Route path="platform-settings" element={
+            <PrivateRoute allowedRoles={['admin']}>
+              <PlatformSettings />
+            </PrivateRoute>
+          } />
+          <Route path="admin/enrollments" element={
+            <PrivateRoute allowedRoles={['admin', 'mentor']}>
+              <EnrollmentManagement />
+            </PrivateRoute>
+          } />
+          <Route path="api-test" element={<APITest />} />
+          <Route path="login-test" element={<LoginTest />} />
         </Route>
       </Routes>
     </AuthProvider>
   );
 }
 
-export default App; 
+export default App;

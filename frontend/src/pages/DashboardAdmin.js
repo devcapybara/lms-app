@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { userAPI } from '../utils/userAPI';
 import { useAuth } from '../utils/AuthContext';
-import { BookOpen, Users, BarChart3, Plus, TrendingUp, Clock, CheckCircle, Shield } from 'lucide-react';
+import { BookOpen, Users, BarChart3, Plus, TrendingUp, Clock, CheckCircle, Shield, Settings, UserCheck } from 'lucide-react';
 
 export default function DashboardAdmin() {
   const { user } = useAuth();
@@ -14,18 +14,38 @@ export default function DashboardAdmin() {
     pendingEnrollments: 0,
     averageCompletion: 0
   });
+  const [enrollmentTracking, setEnrollmentTracking] = useState({
+    enrollments: [],
+    statusSummary: { pending: 0, approved: 0, rejected: 0 },
+    recentApprovals: []
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchDashboardStats();
+    fetchEnrollmentTracking();
   }, []);
 
   const fetchDashboardStats = async () => {
     try {
       setLoading(true);
+      console.log('Fetching dashboard stats in component...');
       const data = await userAPI.getDashboardStats();
-      setStats(data);
+      console.log('Dashboard stats received:', data);
+      
+      // Map API response to expected structure
+      const mappedStats = {
+        totalCourses: data.totalCourses || 0,
+        totalStudents: data.totalStudents || 0,
+        totalLessons: data.totalLessons || 0,
+        completedLessons: data.completedLessons || 0,
+        pendingEnrollments: data.enrollmentStats?.pending || 0,
+        averageCompletion: data.averageCompletion || 0
+      };
+      
+      setStats(mappedStats);
     } catch (error) {
+      console.error('Dashboard stats error in component:', error);
       setStats({
         totalCourses: 5,
         totalStudents: 24,
@@ -36,6 +56,21 @@ export default function DashboardAdmin() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+  const fetchEnrollmentTracking = async () => {
+    try {
+      console.log('Fetching enrollment tracking in component...');
+      const data = await userAPI.getEnrollmentTracking();
+      console.log('Enrollment tracking received:', data);
+      setEnrollmentTracking(data);
+    } catch (error) {
+      console.error('Enrollment tracking error in component:', error);
+      setEnrollmentTracking({
+        enrollments: [],
+        statusSummary: { pending: 0, approved: 0, rejected: 0 },
+        recentApprovals: []
+      });
     }
   };
 
@@ -62,6 +97,64 @@ export default function DashboardAdmin() {
           </div>
         </div>
       </div>
+        {/* Enrollment Tracking Section */}
+        <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+          <h3 className="text-lg font-semibold text-white mb-4">Enrollment Tracking</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="bg-yellow-600/20 border border-yellow-600/30 rounded-lg p-4">
+              <div className="flex items-center">
+                <Clock className="h-5 w-5 text-yellow-400 mr-2" />
+                <div>
+                  <p className="text-yellow-300 text-sm">Pending</p>
+                  <p className="text-white font-bold">{enrollmentTracking.statusSummary.pending}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-green-600/20 border border-green-600/30 rounded-lg p-4">
+              <div className="flex items-center">
+                <CheckCircle className="h-5 w-5 text-green-400 mr-2" />
+                <div>
+                  <p className="text-green-300 text-sm">Approved</p>
+                  <p className="text-white font-bold">{enrollmentTracking.statusSummary.approved}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-red-600/20 border border-red-600/30 rounded-lg p-4">
+              <div className="flex items-center">
+                <UserCheck className="h-5 w-5 text-red-400 mr-2" />
+                <div>
+                  <p className="text-red-300 text-sm">Rejected</p>
+                  <p className="text-white font-bold">{enrollmentTracking.statusSummary.rejected}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Recent Approvals */}
+          <div>
+            <h4 className="text-md font-medium text-white mb-3">Recent Approvals</h4>
+            <div className="space-y-2">
+              {enrollmentTracking.recentApprovals.slice(0, 5).map((enrollment) => (
+                <div key={enrollment._id} className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                  <div className="flex items-center">
+                    <UserCheck className="h-4 w-4 text-green-400 mr-3" />
+                    <div>
+                      <p className="text-white text-sm font-medium">{enrollment.student?.name}</p>
+                      <p className="text-gray-400 text-xs">{enrollment.course?.title}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-green-400 text-xs">Approved by</p>
+                    <p className="text-white text-xs">{enrollment.approvedBy?.name}</p>
+                  </div>
+                </div>
+              ))}
+              {enrollmentTracking.recentApprovals.length === 0 && (
+                <p className="text-gray-400 text-sm text-center py-4">No recent approvals</p>
+              )}
+            </div>
+          </div>
+        </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
@@ -125,6 +218,10 @@ export default function DashboardAdmin() {
               <Users className="h-5 w-5 text-white mr-3" />
               <span className="text-white font-medium">View Students</span>
             </Link>
+            <Link to="/platform-settings" className="flex items-center p-3 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors">
+              <Settings className="h-5 w-5 text-white mr-3" />
+              <span className="text-white font-medium">Platform Settings</span>
+            </Link>
           </div>
         </div>
         <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
@@ -179,4 +276,4 @@ export default function DashboardAdmin() {
       )}
     </div>
   );
-} 
+}

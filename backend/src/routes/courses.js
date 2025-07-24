@@ -314,6 +314,7 @@ router.get('/:id/enrollments', auth, authorize('admin', 'mentor'), async (req, r
   try {
     const enrollments = await Enrollment.find({ course: req.params.id })
       .populate('student', 'name email role')
+      .populate('approvedBy', 'name email role')
       .sort({ enrollmentDate: -1 });
     res.json({ enrollments });
   } catch (error) {

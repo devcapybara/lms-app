@@ -41,6 +41,15 @@ const enrollmentSchema = new mongoose.Schema({
   lastAccessed: {
     type: Date,
     default: Date.now
+  },
+  approvedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  approvedAt: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true
@@ -49,4 +58,4 @@ const enrollmentSchema = new mongoose.Schema({
 // Compound index to ensure unique student-course combinations
 enrollmentSchema.index({ student: 1, course: 1 }, { unique: true });
 
-module.exports = mongoose.model('Enrollment', enrollmentSchema); 
+module.exports = mongoose.model('Enrollment', enrollmentSchema);

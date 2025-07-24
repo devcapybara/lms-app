@@ -434,8 +434,13 @@ export default function CourseDetail() {
     try {
       setEnrollmentLoading(true);
       const res = await courseAPI.getMyEnrollment(id);
-      setEnrollment(res.data.enrollment);
+      if (res.data && res.data.enrollment) {
+        setEnrollment(res.data.enrollment);
+      } else {
+        setEnrollment(null);
+      }
     } catch (err) {
+      console.log('No enrollment found for this course:', err.response?.status);
       setEnrollment(null); // Tidak ada enrollment
     } finally {
       setEnrollmentLoading(false);
@@ -754,10 +759,13 @@ export default function CourseDetail() {
               onClick={async () => {
                 try {
                   console.log('Enroll clicked', id);
-                  await courseAPI.enroll(id);
+                  const response = await courseAPI.enroll(id);
+                  console.log('Enroll response:', response);
+                  // Immediately fetch the updated enrollment status
                   await fetchEnrollmentStatus();
                   alert('Berhasil mendaftar, menunggu persetujuan mentor/admin.');
                 } catch (err) {
+                  console.error('Enroll error:', err);
                   alert(err?.response?.data?.message || 'Gagal mendaftar.');
                 }
               }}

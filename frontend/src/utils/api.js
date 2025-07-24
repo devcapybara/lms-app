@@ -159,4 +159,26 @@ export const lessonAttachmentsAPI = {
   updateAttachments: (lessonId, attachments) => api.put(`/lessons/${lessonId}/attachments`, { attachments }),
 };
 
+// Platform Settings API
+export const platformSettingsAPI = {
+  getPlatformSettings: () => api.get('/platform-settings'),
+  updatePlatformSettings: (data) => api.put('/platform-settings/admin', data),
+  uploadLogo: (formData) => {
+    return axios.post(`${API_BASE_URL}/platform-settings/admin/upload-logo`, formData, {
+      headers: {
+        Authorization: 'Bearer ' + localStorage.getItem('token')
+      }
+    });
+  },
+  uploadFavicon: (formData) => {
+    return axios.post(`${API_BASE_URL}/platform-settings/admin/upload-favicon`, formData, {
+      headers: {
+        Authorization: 'Bearer ' + localStorage.getItem('token')
+      }
+    });
+  },
+  deleteLogo: () => api.delete('/platform-settings/admin/logo'),
+  deleteFavicon: () => api.delete('/platform-settings/admin/favicon'),
+};
+
 export default api; 

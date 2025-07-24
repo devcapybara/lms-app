@@ -19,6 +19,25 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('API Response Error:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      config: {
+        url: error.config?.url,
+        method: error.config?.method,
+        baseURL: error.config?.baseURL
+      }
+    });
+    return Promise.reject(error);
+  }
+);
+
 export const userAPI = {
   // Get all students with enrollment data
   getAllStudents: async () => {
@@ -67,10 +86,37 @@ export const userAPI = {
   // Get dashboard stats
   getDashboardStats: async () => {
     try {
+      console.log('Fetching dashboard stats...');
       const response = await api.get('/users/dashboard-stats');
+      console.log('Dashboard stats response:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
+      console.error('Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data
+      });
+      throw error;
+    }
+  },
+
+  // Get enrollment tracking data
+  getEnrollmentTracking: async () => {
+    try {
+      console.log('Fetching enrollment tracking data...');
+      const response = await api.get('/users/enrollment-tracking');
+      console.log('Enrollment tracking response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching enrollment tracking:', error);
+      console.error('Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data
+      });
       throw error;
     }
   },
@@ -166,4 +212,4 @@ export const userAPI = {
     const response = await api.delete('/upload/photo');
     return response.data;
   }
-}; 
+};

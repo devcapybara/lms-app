@@ -12,13 +12,15 @@ import {
   Settings,
   Target,
   TrendingUp,
-  Users
+  Users,
+  ChevronDown
 } from 'lucide-react';
 
 const Layout = () => {
   const { user, logout, hasRole } = useAuth();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [adminDropdownOpen, setAdminDropdownOpen] = React.useState(false);
 
   const navigation = [
     { name: 'Beranda', href: '/', icon: Home },
@@ -27,18 +29,22 @@ const Layout = () => {
 
   if (user) {
     navigation.push({ name: 'Dashboard', href: '/dashboard', icon: GraduationCap });
-    
-    // Add admin-specific navigation
-    if (hasRole('admin')) {
-      navigation.push({ name: 'Students', href: '/users', icon: Users });
-      navigation.push({ name: 'User Management', href: '/admin/users', icon: Users });
-    }
   }
+
+  // Admin dropdown items
+  const adminMenuItems = [
+    { name: 'Students', href: '/users', icon: Users },
+    { name: 'User Management', href: '/admin/users', icon: Users },
+    { name: 'Platform Settings', href: '/platform-settings', icon: Settings },
+    { name: 'Enrollment Management', href: '/admin/enrollments', icon: Users },
+  ];
 
   const handleLogout = () => {
     logout();
     setMobileMenuOpen(false);
   };
+
+  const isAdminPath = adminMenuItems.some(item => location.pathname === item.href);
 
   return (
     <div className="min-h-screen bg-dark-950">
@@ -74,6 +80,52 @@ const Layout = () => {
                   </Link>
                 );
               })}
+
+              {/* Admin Dropdown */}
+              {user && hasRole('admin') && (
+                <div className="relative">
+                  <button
+                    onClick={() => setAdminDropdownOpen(!adminDropdownOpen)}
+                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                      isAdminPath
+                        ? 'text-primary-400 bg-primary-500/10 border border-primary-500/20'
+                        : 'text-gray-300 hover:text-white hover:bg-dark-800'
+                    }`}
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Admin
+                    <ChevronDown className={`h-4 w-4 ml-1 transition-transform duration-200 ${
+                      adminDropdownOpen ? 'rotate-180' : ''
+                    }`} />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {adminDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-56 bg-dark-800 border border-dark-700 rounded-lg shadow-lg z-50">
+                      <div className="py-2">
+                        {adminMenuItems.map((item) => {
+                          const Icon = item.icon;
+                          return (
+                            <Link
+                              key={item.name}
+                              to={item.href}
+                              className={`flex items-center px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                                location.pathname === item.href
+                                  ? 'text-primary-400 bg-primary-500/10'
+                                  : 'text-gray-300 hover:text-white hover:bg-dark-700'
+                              }`}
+                              onClick={() => setAdminDropdownOpen(false)}
+                            >
+                              <Icon className="h-4 w-4 mr-3" />
+                              {item.name}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* User menu */}
@@ -151,9 +203,38 @@ const Layout = () => {
                   </Link>
                 );
               })}
+
+              {/* Mobile Admin Menu */}
+              {user && hasRole('admin') && (
+                <>
+                  <div className="border-t border-dark-700 my-2"></div>
+                  <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    Admin Menu
+                  </div>
+                  {adminMenuItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.name}
+                        to={item.href}
+                        className={`flex items-center px-3 py-2 text-base font-medium rounded-lg transition-all duration-200 ${
+                          location.pathname === item.href
+                            ? 'text-primary-400 bg-primary-500/10 border border-primary-500/20'
+                            : 'text-gray-300 hover:text-white hover:bg-dark-800'
+                        }`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Icon className="h-5 w-5 mr-3" />
+                        {item.name}
+                      </Link>
+                    );
+                  })}
+                </>
+              )}
               
               {user ? (
                 <>
+                  <div className="border-t border-dark-700 my-2"></div>
                   <Link
                     to="/profile"
                     className="flex items-center px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-dark-800 rounded-lg transition-all duration-200"
@@ -172,6 +253,7 @@ const Layout = () => {
                 </>
               ) : (
                 <>
+                  <div className="border-t border-dark-700 my-2"></div>
                   <Link
                     to="/login"
                     className="flex items-center px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-dark-800 rounded-lg transition-all duration-200"
@@ -191,6 +273,14 @@ const Layout = () => {
             </div>
           </div>
         )}
+
+        {/* Click outside to close dropdown */}
+        {adminDropdownOpen && (
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setAdminDropdownOpen(false)}
+          ></div>
+        )}
       </nav>
 
       {/* Main content */}
@@ -201,4 +291,4 @@ const Layout = () => {
   );
 };
 
-export default Layout; 
+export default Layout;

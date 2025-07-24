@@ -15,7 +15,8 @@ import {
   Calendar,
   FileText,
   MessageSquare,
-  Shield
+  Shield,
+  UserCheck
 } from 'lucide-react';
 import { useAuth } from '../utils/AuthContext';
 import { courseAPI } from '../utils/api';
@@ -33,6 +34,11 @@ const DashboardMentor = () => {
   const [recentCourses, setRecentCourses] = useState([]);
   const [recentEnrollments, setRecentEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [enrollmentTracking, setEnrollmentTracking] = useState({
+    enrollments: [],
+    statusSummary: { pending: 0, approved: 0, rejected: 0 },
+    recentApprovals: []
+  });
 
   useEffect(() => {
     fetchDashboardData();

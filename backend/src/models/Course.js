@@ -40,6 +40,10 @@ const courseSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  isPublished: {
+    type: Boolean,
+    default: false
+  },
   lessons: [{
     type: mongoose.Schema.Types.Mixed
   }],

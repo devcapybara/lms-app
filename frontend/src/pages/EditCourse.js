@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export default function EditCourse() {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ export default function EditCourse() {
     category: 'Digital Marketing',
     price: '',
     image: '',
+    isPublished: false, // Add isPublished field
     
     // Course Content with integrated tests
     lessons: []
@@ -37,17 +39,18 @@ export default function EditCourse() {
 
   const fetchCourseData = async () => {
     try {
-      // TODO: Replace with real API call
-      // const response = await courseAPI.getById(id);
-      // setFormData(response.data);
-      
-      // Mock data for now - simulating existing course data
+      const response = await courseAPI.getById(id);
+      setFormData(response.data);
+    } catch (error) {
+      console.error('Error fetching course:', error);
+      // Fallback to mock data if API call fails
       setFormData({
         title: 'Meta Ads Mastery',
         description: 'Pelajari strategi lengkap untuk mengoptimalkan iklan Facebook dan Instagram agar mendapatkan ROAS yang tinggi.',
         category: 'Digital Marketing',
         price: '299000',
         image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=250&fit=crop',
+        isPublished: false, // Default for mock data
         lessons: [
           {
             title: 'Pengenalan Meta Ads',
@@ -133,8 +136,8 @@ export default function EditCourse() {
           }
         ]
       });
-    } catch (error) {
-      console.error('Error fetching course:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -143,6 +146,21 @@ export default function EditCourse() {
       ...prev,
       [field]: value
     }));
+  };
+
+  const handlePublishToggle = async () => {
+    try {
+      setLoading(true);
+      const newPublishStatus = !formData.isPublished;
+      await courseAPI.updateCoursePublishStatus(id, newPublishStatus);
+      setFormData(prev => ({ ...prev, isPublished: newPublishStatus }));
+      toast.success(`Course ${newPublishStatus ? 'published' : 'unpublished'} successfully!`);
+    } catch (error) {
+      console.error('Error updating publish status:', error);
+      toast.error('Failed to update publish status.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const addQuestion = (lessonIndex, testType) => {
@@ -418,6 +436,23 @@ export default function EditCourse() {
             placeholder="https://example.com/image.jpg"
           />
         </div>
+      </div>
+
+      <div className="flex items-center justify-between bg-gray-800 p-4 rounded-lg border border-gray-700">
+        <label htmlFor="isPublishedToggle" className="text-sm font-medium text-gray-300 cursor-pointer">
+          Publish Course
+        </label>
+        <label htmlFor="isPublishedToggle" className="relative inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            id="isPublishedToggle"
+            className="sr-only peer"
+            checked={formData.isPublished}
+            onChange={handlePublishToggle}
+          />
+          <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+          <span className="ml-3 text-sm font-medium text-gray-300">{formData.isPublished ? 'Published' : 'Draft'}</span>
+        </label>
       </div>
     </div>
   );

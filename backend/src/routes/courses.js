@@ -19,6 +19,37 @@ const handleUploadError = (err, req, res, next) => {
   next();
 };
 
+// Update course isPublished status
+router.patch('/:id/publish', auth, authorize('admin', 'mentor'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isPublished } = req.body;
+
+    if (typeof isPublished === 'undefined') {
+      return res.status(400).json({ message: 'Status publikasi harus disediakan' });
+    }
+
+    let course = await Course.findById(id);
+
+    if (!course) {
+      return res.status(404).json({ message: 'Kursus tidak ditemukan' });
+    }
+
+    // Mentor can only publish/unpublish their own courses
+    if (req.user.role === 'mentor' && course.mentor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Tidak diizinkan untuk mengubah status publikasi kursus ini' });
+    }
+
+    course.isPublished = isPublished;
+    await course.save();
+
+    res.json({ message: 'Status publikasi kursus berhasil diperbarui', course });
+  } catch (error) {
+    console.error('Error updating course publish status:', error);
+    res.status(500).json({ message: 'Error server' });
+  }
+});
+
 // Get all published courses
 router.get('/', async (req, res) => {
   try {

@@ -25,10 +25,30 @@ export default function Courses() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [enrollmentStatusByCourse, setEnrollmentStatusByCourse] = useState({});
 
   useEffect(() => {
     fetchCourses();
   }, []);
+
+  useEffect(() => {
+    if (courses.length > 0 && user) {
+      courses.forEach(async (course) => {
+        try {
+          const res = await courseAPI.getMyEnrollment(course._id);
+          setEnrollmentStatusByCourse(prev => ({
+            ...prev,
+            [course._id]: res.data.enrollment?.status || null
+          }));
+        } catch {
+          setEnrollmentStatusByCourse(prev => ({
+            ...prev,
+            [course._id]: null
+          }));
+        }
+      });
+    }
+  }, [courses, user]);
 
   const fetchCourses = async () => {
     try {
@@ -44,35 +64,17 @@ export default function Courses() {
 
   const handleEnroll = async (courseId) => {
     try {
-      // Update course enrollment status to pending
-      setCourses(courses.map(course => 
-        course._id === courseId 
-          ? { 
-              ...course, 
-              isEnrolled: false, 
-              enrollmentStatus: 'pending',
-              enrollmentDate: new Date().toISOString().split('T')[0]
-            }
-          : course
-      ));
-      
-      // Save to localStorage
-      const savedCourses = JSON.parse(localStorage.getItem('courses') || '[]');
-      const updatedSavedCourses = savedCourses.map(course => 
-        course._id === courseId 
-          ? { 
-              ...course, 
-              isEnrolled: false, 
-              enrollmentStatus: 'pending',
-              enrollmentDate: new Date().toISOString().split('T')[0]
-            }
-          : course
-      );
-      localStorage.setItem('courses', JSON.stringify(updatedSavedCourses));
-      
+      await courseAPI.enroll(courseId);
+      // Fetch ulang status enrollment dari backend
+      const res = await courseAPI.getMyEnrollment(courseId);
+      setEnrollmentStatusByCourse(prev => ({
+        ...prev,
+        [courseId]: res.data.enrollment?.status || null
+      }));
       alert('Enrollment request submitted! Waiting for mentor approval.');
     } catch (error) {
       console.error('Error enrolling:', error);
+      alert(error?.response?.data?.message || 'Gagal mendaftar.');
     }
   };
 
@@ -230,195 +232,198 @@ export default function Courses() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCourses.map((course) => (
-              <div key={course._id} className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden hover:border-gray-600 transition-colors">
-                {/* Course Image */}
-                <div className="relative h-48 bg-gray-700">
-                  <img
-                    src={course.thumbnail || course.image || '/default-course.png'}
-                    alt={course.title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = '/default-course.png';
-                    }}
-                  />
-                  <div className="absolute top-3 right-3">
-                    <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
-                      {course.category}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Course Content */}
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold text-white mb-2 line-clamp-2">
-                    {course.title}
-                  </h3>
-                  <p className="text-gray-400 text-sm mb-4 line-clamp-3">
-                    {course.description}
-                  </p>
-
-                  {/* Course Creator Info */}
-                  <div className="flex items-center space-x-4 mb-3">
-                    <div className="flex items-center space-x-1">
-                      <User className="h-3 w-3 text-blue-400" />
-                      <span className="text-xs text-gray-300">
-                        <span className="text-gray-400">Dibuat oleh:</span> {course.instructor?.name || course.mentor || 'Unknown'}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Shield className="h-3 w-3 text-green-400" />
-                      <span className="text-xs text-gray-300">
-                        <span className="text-gray-400">Role:</span> {course.instructor?.role === 'mentor' ? 'Mentor' : course.instructor?.role || 'Mentor'}
+            {filteredCourses.map((course) => {
+              const status = enrollmentStatusByCourse[course._id];
+              return (
+                <div key={course._id} className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden hover:border-gray-600 transition-colors">
+                  {/* Course Image */}
+                  <div className="relative h-48 bg-gray-700">
+                    <img
+                      src={course.thumbnail || course.image || '/default-course.png'}
+                      alt={course.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/default-course.png';
+                      }}
+                    />
+                    <div className="absolute top-3 right-3">
+                      <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
+                        {course.category}
                       </span>
                     </div>
                   </div>
 
-                  {/* Course Meta */}
-                  <div className="flex items-center justify-between text-sm text-gray-400 mb-4">
-                    <div className="flex items-center">
-                      <Clock className="h-4 w-4 mr-1" />
-                      {course.duration}
-                    </div>
-                    <div className="flex items-center">
-                      <BookOpen className="h-4 w-4 mr-1" />
-                      {Array.isArray(course.lessons) ? course.lessons.length : course.lessons} lessons
-                    </div>
-                    <div className="flex items-center">
-                      <Users className="h-4 w-4 mr-1" />
-                      {course.students}
-                    </div>
-                  </div>
+                  {/* Course Content */}
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold text-white mb-2 line-clamp-2">
+                      {course.title}
+                    </h3>
+                    <p className="text-gray-400 text-sm mb-4 line-clamp-3">
+                      {course.description}
+                    </p>
 
-                  {/* Rating */}
-                  <div className="flex items-center mb-4">
-                    <div className="flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${
-                            i < Math.floor(typeof course.rating === 'object' ? course.rating.average : course.rating)
-                              ? 'text-yellow-400 fill-current'
-                              : 'text-gray-600'
-                          }`}
-                        />
-                      ))}
+                    {/* Course Creator Info */}
+                    <div className="flex items-center space-x-4 mb-3">
+                      <div className="flex items-center space-x-1">
+                        <User className="h-3 w-3 text-blue-400" />
+                        <span className="text-xs text-gray-300">
+                          <span className="text-gray-400">Dibuat oleh:</span> {course.mentor?.name || 'Unknown'}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Shield className="h-3 w-3 text-green-400" />
+                        <span className="text-xs text-gray-300">
+                          <span className="text-gray-400">Role:</span> {course.mentor?.role === 'mentor' ? 'Mentor' : course.mentor?.role || 'Mentor'}
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-gray-400 text-sm ml-2">
-                      {typeof course.rating === 'object' ? course.rating.average : course.rating} 
-                      ({typeof course.rating === 'object' ? course.rating.count : course.students} students)
-                    </span>
-                  </div>
 
-                  {/* Price and Actions */}
-                  <div className="flex items-center justify-between">
-                    <div className="text-2xl font-bold text-white">
-                      Rp {course.price.toLocaleString()}
+                    {/* Course Meta */}
+                    <div className="flex items-center justify-between text-sm text-gray-400 mb-4">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-1" />
+                        {course.duration}
+                      </div>
+                      <div className="flex items-center">
+                        <BookOpen className="h-4 w-4 mr-1" />
+                        {Array.isArray(course.lessons) ? course.lessons.length : course.lessons} lessons
+                      </div>
+                      <div className="flex items-center">
+                        <Users className="h-4 w-4 mr-1" />
+                        {course.students}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {hasRole('admin') ? (
-                        <>
-                          <Link
-                            to={`/edit-course/${course._id}`}
-                            className="p-2 text-blue-400 hover:text-blue-300 transition-colors"
-                          >
-                            <Edit className="h-5 w-5" />
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(course._id)}
-                            className="p-2 text-red-400 hover:text-red-300 transition-colors"
-                          >
-                            <Trash2 className="h-5 w-5" />
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <Link
-                            to={`/courses/${course._id}`}
-                            className="p-2 text-blue-400 hover:text-blue-300 transition-colors"
-                          >
-                            <Eye className="h-5 w-5" />
-                          </Link>
-                          {/* Mentor: Edit Course if owner */}
-                          {hasRole('mentor') && course.instructor?._id === user?._id ? (
+
+                    {/* Rating */}
+                    <div className="flex items-center mb-4">
+                      <div className="flex items-center">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-4 w-4 ${
+                              i < Math.floor(typeof course.rating === 'object' ? course.rating.average : course.rating)
+                                ? 'text-yellow-400 fill-current'
+                                : 'text-gray-600'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-gray-400 text-sm ml-2">
+                        {typeof course.rating === 'object' ? course.rating.average : course.rating} 
+                        ({typeof course.rating === 'object' ? course.rating.count : course.students} students)
+                      </span>
+                    </div>
+
+                    {/* Price and Actions */}
+                    <div className="flex items-center justify-between">
+                      <div className="text-2xl font-bold text-white">
+                        Rp {course.price.toLocaleString()}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {hasRole('admin') ? (
+                          <>
                             <Link
                               to={`/edit-course/${course._id}`}
-                              className="flex items-center px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded-lg transition-colors"
+                              className="p-2 text-blue-400 hover:text-blue-300 transition-colors"
                             >
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit Course
+                              <Edit className="h-5 w-5" />
                             </Link>
-                          ) : course.isEnrolled && course.enrollmentStatus === 'approved' ? (
+                            <button
+                              onClick={() => handleDelete(course._id)}
+                              className="p-2 text-red-400 hover:text-red-300 transition-colors"
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </button>
+                          </>
+                        ) : (
+                          <>
                             <Link
                               to={`/courses/${course._id}`}
-                              className="flex items-center px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors"
+                              className="p-2 text-blue-400 hover:text-blue-300 transition-colors"
                             >
-                              <Play className="h-4 w-4 mr-1" />
-                              Continue
+                              <Eye className="h-5 w-5" />
                             </Link>
-                          ) : course.enrollmentStatus === 'pending' ? (
-                            <div className="flex items-center px-3 py-1 bg-yellow-600 text-white text-sm rounded-lg">
-                              Pending Approval
-                            </div>
-                          ) : course.enrollmentStatus === 'rejected' ? (
-                            <div className="flex items-center px-3 py-1 bg-red-600 text-white text-sm rounded-lg">
-                              Rejected
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => handleEnroll(course._id)}
-                              className="flex items-center px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
-                            >
-                              Enroll
-                            </button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Enrollment Status for Admin */}
-                  {hasRole('admin') && course.enrollmentStatus && (
-                    <div className="mt-3 pt-3 border-t border-gray-700">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-400">Enrollment Status:</span>
-                        <div className="flex items-center gap-2">
-                          {course.enrollmentStatus === 'pending' && (
-                            <>
-                              <span className="text-yellow-400 text-sm">Pending</span>
-                              <button
-                                onClick={() => handleApproveEnrollment(course._id)}
-                                className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors"
+                            {/* Mentor: Edit Course if owner */}
+                            {hasRole('mentor') && course.mentor?._id === user?._id ? (
+                              <Link
+                                to={`/edit-course/${course._id}`}
+                                className="flex items-center px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded-lg transition-colors"
                               >
-                                Approve
-                              </button>
-                              <button
-                                onClick={() => handleRejectEnrollment(course._id)}
-                                className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors"
+                                <Edit className="h-4 w-4 mr-1" />
+                                Edit Course
+                              </Link>
+                            ) : status === 'approved' ? (
+                              <Link
+                                to={`/courses/${course._id}`}
+                                className="flex items-center px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors"
                               >
-                                Reject
+                                <Play className="h-4 w-4 mr-1" />
+                                Continue
+                              </Link>
+                            ) : status === 'pending' ? (
+                              <div className="flex items-center px-3 py-1 bg-yellow-600 text-white text-sm rounded-lg">
+                                Pending Approval
+                              </div>
+                            ) : status === 'rejected' ? (
+                              <div className="flex items-center px-3 py-1 bg-red-600 text-white text-sm rounded-lg">
+                                Rejected
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => handleEnroll(course._id)}
+                                className="flex items-center px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
+                              >
+                                Enroll
                               </button>
-                            </>
-                          )}
-                          {course.enrollmentStatus === 'approved' && (
-                            <span className="text-green-400 text-sm">Approved</span>
-                          )}
-                          {course.enrollmentStatus === 'rejected' && (
-                            <span className="text-red-400 text-sm">Rejected</span>
-                          )}
-                        </div>
+                            )}
+                          </>
+                        )}
                       </div>
-                      {course.enrollmentDate && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          Requested: {new Date(course.enrollmentDate).toLocaleDateString()}
-                        </div>
-                      )}
                     </div>
-                  )}
+
+                    {/* Enrollment Status for Admin */}
+                    {hasRole('admin') && course.enrollmentStatus && (
+                      <div className="mt-3 pt-3 border-t border-gray-700">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-400">Enrollment Status:</span>
+                          <div className="flex items-center gap-2">
+                            {course.enrollmentStatus === 'pending' && (
+                              <>
+                                <span className="text-yellow-400 text-sm">Pending</span>
+                                <button
+                                  onClick={() => handleApproveEnrollment(course._id)}
+                                  className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => handleRejectEnrollment(course._id)}
+                                  className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors"
+                                >
+                                  Reject
+                                </button>
+                              </>
+                            )}
+                            {course.enrollmentStatus === 'approved' && (
+                              <span className="text-green-400 text-sm">Approved</span>
+                            )}
+                            {course.enrollmentStatus === 'rejected' && (
+                              <span className="text-red-400 text-sm">Rejected</span>
+                            )}
+                          </div>
+                        </div>
+                        {course.enrollmentDate && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            Requested: {new Date(course.enrollmentDate).toLocaleDateString()}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -16,8 +16,7 @@ const router = express.Router();
 router.get('/course/:courseId', async (req, res) => {
   try {
     const lessons = await Lesson.find({ 
-      course: req.params.courseId,
-      isPublished: true 
+      course: req.params.courseId
     })
     .sort({ order: 1 })
     .select('-quiz -completedBy');

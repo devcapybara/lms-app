@@ -63,10 +63,6 @@ const courseSchema = new mongoose.Schema({
     type: Number,
     default: 0 // in minutes
   },
-  isPublished: {
-    type: Boolean,
-    default: false
-  },
   tags: [{
     type: String,
     trim: true

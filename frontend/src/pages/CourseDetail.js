@@ -515,13 +515,13 @@ export default function CourseDetail() {
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4 text-blue-400" />
                     <span className="text-sm text-gray-300">
-                      Dibuat oleh: <span className="font-medium text-white">{course.instructor?.name || course.mentor || 'Unknown'}</span>
+                      Dibuat oleh: <span className="font-medium text-white">{course.mentor?.name || 'Unknown'}</span>
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Shield className="h-4 w-4 text-green-400" />
                     <span className="text-sm text-gray-300">
-                      Role: <span className="font-medium text-white">{course.instructor?.role === 'mentor' ? 'Mentor' : course.instructor?.role || 'Mentor'}</span>
+                      Role: <span className="font-medium text-white">{course.mentor?.role === 'mentor' ? 'Mentor' : course.mentor?.role || 'Mentor'}</span>
                     </span>
                   </div>
                 </div>
@@ -758,10 +758,7 @@ export default function CourseDetail() {
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg mb-4"
               onClick={async () => {
                 try {
-                  console.log('Enroll clicked', id);
-                  const response = await courseAPI.enroll(id);
-                  console.log('Enroll response:', response);
-                  // Immediately fetch the updated enrollment status
+                  await courseAPI.enroll(id);
                   await fetchEnrollmentStatus();
                   alert('Berhasil mendaftar, menunggu persetujuan mentor/admin.');
                 } catch (err) {

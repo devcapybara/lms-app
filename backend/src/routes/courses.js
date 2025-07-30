@@ -207,14 +207,6 @@ router.post('/:id/enroll', auth, async (req, res) => {
     if (!course) {
       return res.status(404).json({ message: 'Kursus tidak ditemukan' });
     }
-    if (!course.isPublished) {
-      return res.status(400).json({ message: 'Kursus belum dipublikasikan' });
-    }
-    // Cek apakah sudah pernah daftar
-    const existing = await Enrollment.findOne({ student: req.user._id, course: course._id });
-    if (existing) {
-      return res.status(400).json({ message: 'Anda sudah mendaftar ke kursus ini' });
-    }
     // Buat enrollment baru
     const enrollment = new Enrollment({
       student: req.user._id,

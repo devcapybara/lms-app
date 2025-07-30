@@ -236,7 +236,7 @@ router.get('/dashboard-stats', auth, async (req, res) => {
 
       // Calculate total lessons across all courses
       const courses = await Course.find();
-      const totalLessons = courses.reduce((total, course) => total + (course.lessons?.length || 0), 0);
+      const totalLessons = mentorCourses.reduce((sum, course) => sum + (course.lessons?.length || 0), 0);
       
       // Calculate completed lessons (this is a simplified calculation)
       const completedLessons = Math.floor(totalLessons * 0.7); // Assuming 70% completion rate
@@ -268,9 +268,12 @@ router.get('/dashboard-stats', auth, async (req, res) => {
         recentEnrollments
       };
     } else if (userRole === 'mentor') {
+      console.log('Fetching dashboard stats for mentor ID:', req.user._id);
       // Mentor gets stats for their courses only
       const mentorCourses = await Course.find({ mentor: req.user._id });
+      console.log('Mentor courses for dashboard stats:', mentorCourses);
       const courseIds = mentorCourses.map(course => course._id);
+      console.log('Course IDs for dashboard stats:', courseIds);
       
       const totalCourses = mentorCourses.length;
       const totalEnrollments = await Enrollment.countDocuments({ course: { $in: courseIds } });
@@ -283,6 +286,11 @@ router.get('/dashboard-stats', auth, async (req, res) => {
         status: 'approved' 
       });
 
+      // Calculate total lessons for mentor's courses
+      const totalLessons = mentorCourses.reduce((sum, course) => sum + (course.lessons?.length || 0), 0);
+      // Assuming 'completed' status for courses is available, otherwise it will be 0
+      const completedCourses = mentorCourses.filter(course => course.status === 'completed').length;
+
       // Get recent enrollments for mentor's courses
       const recentEnrollments = await Enrollment.find({ course: { $in: courseIds } })
         .sort({ enrollmentDate: -1 })
@@ -293,6 +301,8 @@ router.get('/dashboard-stats', auth, async (req, res) => {
       stats = {
         totalCourses,
         totalEnrollments,
+        totalLessons,
+        completedCourses,
         enrollmentStats: {
           pending: pendingEnrollments,
           approved: approvedEnrollments,
@@ -303,6 +313,7 @@ router.get('/dashboard-stats', auth, async (req, res) => {
         },
         recentEnrollments
       };
+      console.log('Final dashboard stats for mentor:', stats);
     } else {
       // Student gets basic stats
       const userEnrollments = await Enrollment.find({ student: req.user._id })
@@ -442,9 +453,11 @@ router.get('/enrolled-courses', auth, async (req, res) => {
 // Get created courses (for mentors)
 router.get('/created-courses', auth, authorize('mentor', 'admin'), async (req, res) => {
   try {
+    console.log('Fetching created courses for mentor ID:', req.user._id);
     const courses = await Course.find({ mentor: req.user._id })
       .populate('mentor', 'name')
       .sort({ createdAt: -1 });
+    console.log('Created courses found:', courses);
 
     // Get enrollments for each course
     const coursesWithEnrollments = await Promise.all(
@@ -459,6 +472,7 @@ router.get('/created-courses', auth, authorize('mentor', 'admin'), async (req, r
         };
       })
     );
+    console.log('Courses with enrollments for mentor:', coursesWithEnrollments);
 
     res.json({ courses: coursesWithEnrollments });
   } catch (error) {

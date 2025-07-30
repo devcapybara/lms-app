@@ -79,6 +79,7 @@ export const courseAPI = {
   updateEnrollmentStatus: (enrollmentId, status) => api.patch(`/enrollments/${enrollmentId}/status`, { status }),
   updateEnrollmentProgress: (enrollmentId, data) => api.patch(`/enrollments/${enrollmentId}/progress`, data),
   getMyEnrollments: () => api.get('/enrollments/me'),
+  getAllEnrollments: () => api.get('/enrollments'),
   getMyCourses: () => api.get('/users/created-courses'),
 };
 

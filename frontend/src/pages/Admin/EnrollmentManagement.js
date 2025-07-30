@@ -8,13 +8,13 @@ const EnrollmentManagement = () => {
   const [processing, setProcessing] = useState({});
 
   useEffect(() => {
-    fetchPendingEnrollments();
+    fetchAllEnrollments();
   }, []);
 
-  const fetchPendingEnrollments = async () => {
+  const fetchAllEnrollments = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/users/pending-enrollments', {
+      const response = await fetch('/api/enrollments', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -34,59 +34,32 @@ const EnrollmentManagement = () => {
     }
   };
 
-  const handleApproveEnrollment = async (studentId, courseId, enrollmentId) => {
+  const handleUpdateStatus = async (enrollmentId, status) => {
     try {
-      setProcessing(prev => ({ ...prev, [enrollmentId]: 'approving' }));
+      setProcessing(prev => ({ ...prev, [enrollmentId]: status }));
       
-      const response = await fetch(`/api/users/students/${studentId}/enrollments/${courseId}/approve`, {
-        method: 'PUT',
+      const response = await fetch(`/api/enrollments/${enrollmentId}/status`, {
+        method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({ status })
       });
 
       const data = await response.json();
       
       if (response.ok) {
-        toast.success('Enrollment berhasil disetujui');
-        // Remove from pending list
-        setEnrollments(prev => prev.filter(enrollment => enrollment._id !== enrollmentId));
+        toast.success(`Enrollment berhasil diubah ke ${status}`);
+        setEnrollments(prev => 
+          prev.map(e => e._id === enrollmentId ? { ...e, status } : e)
+        );
       } else {
         throw new Error(data.message);
       }
     } catch (error) {
-      console.error('Error approving enrollment:', error);
-      toast.error(error.message || 'Gagal menyetujui enrollment');
-    } finally {
-      setProcessing(prev => ({ ...prev, [enrollmentId]: null }));
-    }
-  };
-
-  const handleRejectEnrollment = async (studentId, courseId, enrollmentId) => {
-    try {
-      setProcessing(prev => ({ ...prev, [enrollmentId]: 'rejecting' }));
-      
-      const response = await fetch(`/api/users/students/${studentId}/enrollments/${courseId}/reject`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
-        toast.success('Enrollment berhasil ditolak');
-        // Remove from pending list
-        setEnrollments(prev => prev.filter(enrollment => enrollment._id !== enrollmentId));
-      } else {
-        throw new Error(data.message);
-      }
-    } catch (error) {
-      console.error('Error rejecting enrollment:', error);
-      toast.error(error.message || 'Gagal menolak enrollment');
+      console.error(`Error updating enrollment to ${status}:`, error);
+      toast.error(error.message || `Gagal mengubah status enrollment`);
     } finally {
       setProcessing(prev => ({ ...prev, [enrollmentId]: null }));
     }
@@ -121,7 +94,7 @@ const EnrollmentManagement = () => {
             </div>
             <div className="flex items-center space-x-2 text-sm text-gray-500">
               <Clock className="h-4 w-4" />
-              <span>{enrollments.length} pending enrollments</span>
+              <span>{enrollments.length} total enrollments</span>
             </div>
           </div>
         </div>
@@ -130,8 +103,8 @@ const EnrollmentManagement = () => {
           {enrollments.length === 0 ? (
             <div className="text-center py-12">
               <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Tidak ada enrollment pending</h3>
-              <p className="text-gray-500">Semua enrollment sudah diproses atau belum ada yang mendaftar.</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Tidak ada data enrollment</h3>
+              <p className="text-gray-500">Belum ada siswa yang mendaftar.</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -159,38 +132,48 @@ const EnrollmentManagement = () => {
                       <div className="flex items-center space-x-4 text-sm text-gray-500">
                         <span>Tanggal daftar: {formatDate(enrollment.enrollmentDate)}</span>
                         <span className="flex items-center space-x-1">
-                          <Clock className="h-4 w-4" />
-                          <span>Status: Pending</span>
+                          {enrollment.status === 'pending' && <Clock className="h-4 w-4 text-yellow-500" />}
+                          {enrollment.status === 'approved' && <CheckCircle className="h-4 w-4 text-green-500" />}
+                          {enrollment.status === 'rejected' && <XCircle className="h-4 w-4 text-red-500" />}
+                          <span className={`capitalize font-medium ${{
+                            pending: 'text-yellow-600',
+                            approved: 'text-green-600',
+                            rejected: 'text-red-600'
+                          }[enrollment.status]}`}>{enrollment.status}</span>
                         </span>
                       </div>
                     </div>
 
                     <div className="flex items-center space-x-2 ml-4">
-                      <button
-                        onClick={() => handleApproveEnrollment(enrollment.student._id, enrollment.course._id, enrollment._id)}
-                        disabled={processing[enrollment._id]}
-                        className="flex items-center space-x-1 px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {processing[enrollment._id] === 'approving' ? (
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        ) : (
-                          <CheckCircle className="h-4 w-4" />
-                        )}
-                        <span>Setujui</span>
-                      </button>
-                      
-                      <button
-                        onClick={() => handleRejectEnrollment(enrollment.student._id, enrollment.course._id, enrollment._id)}
-                        disabled={processing[enrollment._id]}
-                        className="flex items-center space-x-1 px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {processing[enrollment._id] === 'rejecting' ? (
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        ) : (
-                          <XCircle className="h-4 w-4" />
-                        )}
-                        <span>Tolak</span>
-                      </button>
+                      {enrollment.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleUpdateStatus(enrollment._id, 'approved')}
+                            disabled={processing[enrollment._id]}
+                            className="flex items-center space-x-1 px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {processing[enrollment._id] === 'approved' ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            ) : (
+                              <CheckCircle className="h-4 w-4" />
+                            )}
+                            <span>Setujui</span>
+                          </button>
+                          
+                          <button
+                            onClick={() => handleUpdateStatus(enrollment._id, 'rejected')}
+                            disabled={processing[enrollment._id]}
+                            className="flex items-center space-x-1 px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {processing[enrollment._id] === 'rejected' ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            ) : (
+                              <XCircle className="h-4 w-4" />
+                            )}
+                            <span>Tolak</span>
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

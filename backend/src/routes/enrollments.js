@@ -1,8 +1,35 @@
 const express = require('express');
 const { auth, authorize } = require('../middlewares/auth');
 const Enrollment = require('../models/Enrollment');
+const Course = require('../models/Course');
 
 const router = express.Router();
+
+// Get all enrollments (admin/mentor only)
+router.get('/', auth, authorize('admin', 'mentor'), async (req, res) => {
+  try {
+    let query = {};
+    // If mentor, only show enrollments for their courses
+    if (req.user.role === 'mentor') {
+      console.log('Mentor ID:', req.user._id);
+      const mentorCourses = await Course.find({ mentor: req.user._id }).select('_id');
+      console.log('Mentor Courses found:', mentorCourses);
+      const courseIds = mentorCourses.map(course => course._id);
+      query.course = { $in: courseIds };
+    }
+
+    const enrollments = await Enrollment.find(query)
+      .populate('student', 'name email')
+      .populate('course', 'title category')
+      .sort({ createdAt: -1 });
+    console.log('Enrollments returned for mentor:', enrollments);
+
+    res.json({ enrollments });
+  } catch (error) {
+    console.error('Get all enrollments error:', error);
+    res.status(500).json({ message: 'Error server' });
+  }
+});
 
 // Update status enrollment (admin/mentor only)
 router.patch('/:id/status', auth, authorize('admin', 'mentor'), async (req, res) => {

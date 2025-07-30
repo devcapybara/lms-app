@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../utils/AuthContext';
 import { courseAPI } from '../utils/api';
+import { userAPI } from '../utils/userAPI';
+import EnrollmentReviewModal from '../components/EnrollmentReviewModal';
 
 const DashboardMentor = () => {
   const { user } = useAuth();
@@ -34,11 +36,7 @@ const DashboardMentor = () => {
   const [recentCourses, setRecentCourses] = useState([]);
   const [recentEnrollments, setRecentEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [enrollmentTracking, setEnrollmentTracking] = useState({
-    enrollments: [],
-    statusSummary: { pending: 0, approved: 0, rejected: 0 },
-    recentApprovals: []
-  });
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -48,39 +46,26 @@ const DashboardMentor = () => {
     try {
       setLoading(true);
       
-      // Fetch mentor's courses
-      const coursesResponse = await courseAPI.getMyCourses();
-      const courses = coursesResponse.courses || [];
-      
-      // Calculate stats
-      const totalLessons = courses.reduce((sum, course) => sum + (course.lessons?.length || 0), 0);
-      const totalEnrollments = courses.reduce((sum, course) => sum + (course.enrollments?.length || 0), 0);
-      const pendingEnrollments = courses.reduce((sum, course) => {
-        const pending = course.enrollments?.filter(e => e.status === 'pending').length || 0;
-        return sum + pending;
-      }, 0);
-      const completedCourses = courses.filter(course => course.status === 'completed').length;
+      // Fetch dashboard stats for mentor
+      const data = await userAPI.getDashboardStats();
+      console.log('Dashboard Stats for Mentor:', data);
 
       setStats({
-        totalCourses: courses.length,
-        totalStudents: totalEnrollments,
-        totalLessons,
-        totalEnrollments,
-        pendingEnrollments,
-        completedCourses
+        totalCourses: data.totalCourses || 0,
+        totalStudents: data.totalEnrollments || 0, // total students is total enrollments for mentor
+        totalLessons: data.totalLessons || 0, // Assuming totalLessons is part of dashboard-stats for mentor
+        totalEnrollments: data.totalEnrollments || 0,
+        pendingEnrollments: data.enrollmentStats?.pending || 0,
+        completedCourses: data.completedCourses || 0 // Assuming completedCourses is part of dashboard-stats for mentor
       });
 
-      // Set recent courses (latest 5)
-      setRecentCourses(courses.slice(0, 5));
+      // Set recent courses (if available in dashboard-stats, otherwise keep empty)
+      // For mentor, recent courses are not directly available in dashboard-stats, so we keep it empty or fetch separately if needed.
+      // For now, we will rely on recent enrollments.
+      setRecentCourses([]); 
 
-      // Get recent enrollments from all courses
-      const allEnrollments = courses.flatMap(course => 
-        (course.enrollments || []).map(enrollment => ({
-          ...enrollment,
-          courseTitle: course.title
-        }))
-      );
-      setRecentEnrollments(allEnrollments.slice(0, 5));
+      // Set recent enrollments
+      setRecentEnrollments(data.recentEnrollments || []);
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -88,6 +73,13 @@ const DashboardMentor = () => {
       setLoading(false);
     }
   };
+
+  const handleEnrollmentUpdate = (updatedEnrollmentId, newStatus) => {
+    // Re-fetch dashboard data to update counts and lists
+    fetchDashboardData();
+  };
+
+  const pendingEnrollments = recentEnrollments.filter(e => e.status === 'pending');
 
   if (loading) {
     return (
@@ -152,7 +144,7 @@ const DashboardMentor = () => {
             </div>
           </div>
 
-          <div className="bg-gray-800 rounded-lg p-6">
+          <div className="bg-gray-800 rounded-lg p-6 cursor-pointer" onClick={() => setIsModalOpen(true)}>
             <div className="flex items-center">
               <div className="p-3 rounded-full bg-yellow-600">
                 <Clock className="h-6 w-6 text-white" />
@@ -267,9 +259,9 @@ const DashboardMentor = () => {
           <div className="bg-gray-800 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">Enrollment Terbaru</h3>
-              <Link to="/users" className="text-blue-400 hover:text-blue-300 text-sm">
+              <button onClick={() => setIsModalOpen(true)} className="text-blue-400 hover:text-blue-300 text-sm focus:outline-none">
                 Lihat Semua
-              </Link>
+              </button>
             </div>
             <div className="space-y-4">
               {recentEnrollments.length === 0 ? (
@@ -282,7 +274,7 @@ const DashboardMentor = () => {
                       <div>
                         <p className="text-white font-medium">{enrollment.student?.name}</p>
                         <p className="text-gray-400 text-sm">
-                          {enrollment.courseTitle} • {enrollment.status}
+                          {enrollment.course?.title} • {enrollment.status}
                         </p>
                       </div>
                     </div>
@@ -325,6 +317,12 @@ const DashboardMentor = () => {
           </div>
         </div>
       </div>
+      <EnrollmentReviewModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        pendingEnrollments={pendingEnrollments}
+        onUpdateEnrollment={handleEnrollmentUpdate}
+      />
     </div>
   );
 };

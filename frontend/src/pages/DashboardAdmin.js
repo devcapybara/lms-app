@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { userAPI } from '../utils/userAPI';
 import { useAuth } from '../utils/AuthContext';
 import { BookOpen, Users, BarChart3, Plus, TrendingUp, Clock, CheckCircle, Shield, Settings, UserCheck } from 'lucide-react';
+import EnrollmentReviewModal from '../components/EnrollmentReviewModal';
 
 export default function DashboardAdmin() {
   const { user } = useAuth();
@@ -20,6 +21,7 @@ export default function DashboardAdmin() {
     recentApprovals: []
   });
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchDashboardStats();
@@ -73,6 +75,20 @@ export default function DashboardAdmin() {
       });
     }
   };
+
+  const handleEnrollmentUpdate = (updatedEnrollmentId, newStatus) => {
+    // Re-fetch enrollment tracking to update counts and lists
+    fetchEnrollmentTracking();
+    // Also update the pendingEnrollments count in stats if necessary
+    if (newStatus !== 'pending') {
+      setStats(prevStats => ({
+        ...prevStats,
+        pendingEnrollments: prevStats.pendingEnrollments > 0 ? prevStats.pendingEnrollments - 1 : 0
+      }));
+    }
+  };
+
+  const pendingEnrollments = enrollmentTracking.enrollments.filter(e => e.status === 'pending');
 
   return (
     <div className="space-y-6">
@@ -268,12 +284,22 @@ export default function DashboardAdmin() {
                 <p className="text-yellow-300">You have {stats.pendingEnrollments} enrollment requests waiting for approval</p>
               </div>
             </div>
-            <Link to="/users" className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors"
+            >
               Review Now
-            </Link>
+            </button>
           </div>
         </div>
       )}
+
+      <EnrollmentReviewModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        pendingEnrollments={pendingEnrollments}
+        onUpdateEnrollment={handleEnrollmentUpdate}
+      />
     </div>
   );
 }

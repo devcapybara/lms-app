@@ -36,7 +36,7 @@ router.get('/', async (req, res) => {
     }
 
     const courses = await Course.find(filter)
-      .populate('instructor', 'name email avatar role')
+      .populate('mentor', 'name email avatar role')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -59,7 +59,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const course = await Course.findById(req.params.id)
-      .populate('instructor', 'name email avatar bio role')
+      .populate('mentor', 'name email avatar bio role')
       .populate('lessons', 'title description order duration');
 
     if (!course) {
@@ -100,7 +100,7 @@ router.post('/', auth, authorize('mentor', 'admin'), [
 
     const courseData = {
       ...req.body,
-      instructor: req.user._id,
+      mentor: req.user._id,
       isFree: !req.body.price || req.body.price === 0,
       thumbnail
     };
@@ -108,13 +108,13 @@ router.post('/', auth, authorize('mentor', 'admin'), [
     const course = new Course(courseData);
     await course.save();
 
-    // Add course to instructor's created courses
+    // Add course to mentor's created courses
     await User.findByIdAndUpdate(req.user._id, {
       $push: { createdCourses: course._id }
     });
 
     const populatedCourse = await Course.findById(course._id)
-      .populate('instructor', 'name email avatar');
+      .populate('mentor', 'name email avatar');
 
     res.status(201).json({
       message: 'Kursus berhasil dibuat',
@@ -126,7 +126,7 @@ router.post('/', auth, authorize('mentor', 'admin'), [
   }
 });
 
-// Update course (instructor only)
+// Update course (mentor only)
 router.put('/:id', auth, [
   body('title').optional().trim().isLength({ min: 3, max: 100 }).withMessage('Judul harus 3-100 karakter'),
   body('description').optional().trim().isLength({ min: 10, max: 1000 }).withMessage('Deskripsi harus 10-1000 karakter'),
@@ -147,8 +147,8 @@ router.put('/:id', auth, [
       return res.status(404).json({ message: 'Kursus tidak ditemukan' });
     }
 
-    // Check if user is the instructor or admin
-    if (course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    // Check if user is the mentor or admin
+    if (course.mentor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Anda tidak memiliki izin untuk mengedit kursus ini' });
     }
 
@@ -161,7 +161,7 @@ router.put('/:id', auth, [
       req.params.id,
       updates,
       { new: true, runValidators: true }
-    ).populate('instructor', 'name email avatar');
+    ).populate('mentor', 'name email avatar');
 
     res.json({
       message: 'Kursus berhasil diperbarui',
@@ -173,7 +173,7 @@ router.put('/:id', auth, [
   }
 });
 
-// Delete course (instructor only)
+// Delete course (mentor only)
 router.delete('/:id', auth, async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
@@ -181,14 +181,14 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(404).json({ message: 'Kursus tidak ditemukan' });
     }
 
-    // Check if user is the instructor or admin
-    if (course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    // Check if user is the mentor or admin
+    if (course.mentor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Anda tidak memiliki izin untuk menghapus kursus ini' });
     }
 
     await Course.findByIdAndDelete(req.params.id);
 
-    // Remove course from instructor's created courses
+    // Remove course from mentor's created courses
     await User.findByIdAndUpdate(req.user._id, {
       $pull: { createdCourses: req.params.id }
     });

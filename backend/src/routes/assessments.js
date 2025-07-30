@@ -27,7 +27,7 @@ router.get('/course/:courseId', async (req, res) => {
 router.get('/:id', auth, async (req, res) => {
   try {
     const assessment = await Assessment.findById(req.params.id)
-      .populate('course', 'title instructor');
+      .populate('course', 'title mentor');
 
     if (!assessment) {
       return res.status(404).json({ message: 'Assessment tidak ditemukan' });
@@ -36,15 +36,15 @@ router.get('/:id', auth, async (req, res) => {
     // Check if user is enrolled in the course
     const course = await Course.findById(assessment.course._id);
     const isEnrolled = course.enrolledStudents.includes(req.user._id);
-    const isInstructor = course.instructor.toString() === req.user._id.toString();
+    const isMentor = course.mentor.toString() === req.user._id.toString();
     const isAdmin = req.user.role === 'admin';
 
-    if (!isEnrolled && !isInstructor && !isAdmin) {
+    if (!isEnrolled && !isMentor && !isAdmin) {
       return res.status(403).json({ message: 'Anda harus terdaftar di kursus ini untuk mengikuti assessment' });
     }
 
-    // Remove correct answers if not instructor/admin
-    if (!isInstructor && !isAdmin) {
+    // Remove correct answers if not mentor/admin
+if (!isMentor && !isAdmin) {
       assessment.questions = assessment.questions.map(q => ({
         question: q.question,
         options: q.options,
@@ -59,7 +59,7 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-// Create assessment (instructor only)
+// Create assessment (mentor only)
 router.post('/', auth, authorize('mentor', 'admin'), [
   body('title').trim().isLength({ min: 3, max: 100 }).withMessage('Judul harus 3-100 karakter'),
   body('type').isIn(['pre-test', 'post-test']).withMessage('Tipe assessment tidak valid'),
@@ -83,8 +83,9 @@ router.post('/', auth, authorize('mentor', 'admin'), [
       return res.status(404).json({ message: 'Kursus tidak ditemukan' });
     }
 
-    // Check if user is the instructor or admin
-    if (course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    // Check if user is the mentor or admin
+    // Check if user is the mentor or admin
+if (course.mentor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Anda tidak memiliki izin untuk membuat assessment di kursus ini' });
     }
 
@@ -204,7 +205,7 @@ router.get('/:id/attempts', auth, async (req, res) => {
   }
 });
 
-// Update assessment (instructor only)
+// Update assessment (mentor only)
 router.put('/:id', auth, [
   body('title').optional().trim().isLength({ min: 3, max: 100 }).withMessage('Judul harus 3-100 karakter'),
   body('isActive').optional().isBoolean().withMessage('Status aktif tidak valid')
@@ -223,8 +224,8 @@ router.put('/:id', auth, [
       return res.status(404).json({ message: 'Assessment tidak ditemukan' });
     }
 
-    // Check if user is the instructor or admin
-    if (assessment.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    // Check if user is the mentor or admin
+    if (assessment.course.mentor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Anda tidak memiliki izin untuk mengedit assessment ini' });
     }
 
@@ -244,7 +245,7 @@ router.put('/:id', auth, [
   }
 });
 
-// Delete assessment (instructor only)
+// Delete assessment (mentor only)
 router.delete('/:id', auth, async (req, res) => {
   try {
     const assessment = await Assessment.findById(req.params.id).populate('course');
@@ -252,8 +253,8 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(404).json({ message: 'Assessment tidak ditemukan' });
     }
 
-    // Check if user is the instructor or admin
-    if (assessment.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    // Check if user is the mentor or admin
+    if (assessment.course.mentor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Anda tidak memiliki izin untuk menghapus assessment ini' });
     }
 

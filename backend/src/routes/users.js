@@ -76,7 +76,7 @@ router.put('/students/:studentId/enrollments/:courseId/approve', auth, authorize
     // Check if mentor is trying to approve their own course
     if (req.user.role === 'mentor') {
       const course = await Course.findById(courseId);
-      if (!course || course.instructor.toString() !== req.user._id.toString()) {
+      if (!course || course.mentor.toString() !== req.user._id.toString()) {
         return res.status(403).json({ message: 'Mentor hanya bisa approve enrollment untuk course sendiri' });
       }
     }
@@ -125,7 +125,7 @@ router.put('/students/:studentId/enrollments/:courseId/reject', auth, authorize(
     // Check if mentor is trying to reject their own course
     if (req.user.role === 'mentor') {
       const course = await Course.findById(courseId);
-      if (!course || course.instructor.toString() !== req.user._id.toString()) {
+      if (!course || course.mentor.toString() !== req.user._id.toString()) {
         return res.status(403).json({ message: 'Mentor hanya bisa reject enrollment untuk course sendiri' });
       }
     }
@@ -158,14 +158,14 @@ router.get('/pending-enrollments', auth, authorize('admin', 'mentor'), async (re
     
     // If mentor, only show enrollments for their courses
     if (req.user.role === 'mentor') {
-      const mentorCourses = await Course.find({ instructor: req.user._id }).select('_id');
+      const mentorCourses = await Course.find({ mentor: req.user._id }).select('_id');
       const courseIds = mentorCourses.map(course => course._id);
       query.course = { $in: courseIds };
     }
 
     const enrollments = await Enrollment.find(query)
       .populate('student', 'name email photo')
-      .populate('course', 'title category thumbnail instructor')
+      .populate('course', 'title category thumbnail mentor')
       .populate('approvedBy', 'name email role')
       .sort({ enrollmentDate: -1 });
 
@@ -182,14 +182,14 @@ router.get('/enrollment-tracking', auth, authorize('admin', 'mentor'), async (re
     
     // If mentor, only show enrollments for their courses
     if (req.user.role === 'mentor') {
-      const mentorCourses = await Course.find({ instructor: req.user._id }).select('_id');
+      const mentorCourses = await Course.find({ mentor: req.user._id }).select('_id');
       const courseIds = mentorCourses.map(course => course._id);
       query.course = { $in: courseIds };
     }
 
     const enrollments = await Enrollment.find(query)
       .populate('student', 'name email photo')
-      .populate('course', 'title category thumbnail instructor')
+      .populate('course', 'title category thumbnail mentor')
       .populate('approvedBy', 'name email role')
       .sort({ enrollmentDate: -1 })
       .limit(50); // Limit for performance
@@ -269,7 +269,7 @@ router.get('/dashboard-stats', auth, async (req, res) => {
       };
     } else if (userRole === 'mentor') {
       // Mentor gets stats for their courses only
-      const mentorCourses = await Course.find({ instructor: req.user._id });
+      const mentorCourses = await Course.find({ mentor: req.user._id });
       const courseIds = mentorCourses.map(course => course._id);
       
       const totalCourses = mentorCourses.length;
@@ -427,7 +427,7 @@ router.get('/enrolled-courses', auth, async (req, res) => {
       .populate({
         path: 'enrolledCourses',
         populate: {
-          path: 'instructor',
+          path: 'mentor',
           select: 'name'
         }
       });
@@ -442,8 +442,8 @@ router.get('/enrolled-courses', auth, async (req, res) => {
 // Get created courses (for mentors)
 router.get('/created-courses', auth, authorize('mentor', 'admin'), async (req, res) => {
   try {
-    const courses = await Course.find({ instructor: req.user._id })
-      .populate('instructor', 'name')
+    const courses = await Course.find({ mentor: req.user._id })
+      .populate('mentor', 'name')
       .sort({ createdAt: -1 });
 
     // Get enrollments for each course

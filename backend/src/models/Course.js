@@ -12,7 +12,7 @@ const courseSchema = new mongoose.Schema({
     required: [true, 'Deskripsi kursus harus diisi'],
     maxlength: [1000, 'Deskripsi tidak boleh lebih dari 1000 karakter']
   },
-  instructor: {
+  mentor: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true

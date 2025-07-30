@@ -70,3 +70,6 @@ backend/uploads/
 # Update 11 Juli 2024
 # - Pastikan node_modules, .env, dan file build tidak di-track git
 # - backend/uploads/ juga di-ignore untuk keamanan file upload 
+
+# File rekomendasi keamanan (jangan di-commit)
+rekomendasikeamanan.md 

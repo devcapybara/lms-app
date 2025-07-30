@@ -33,7 +33,7 @@ router.get('/course/:courseId', async (req, res) => {
 router.get('/:id', auth, async (req, res) => {
   try {
     const lesson = await Lesson.findById(req.params.id)
-      .populate('course', 'title instructor');
+      .populate('course', 'title mentor');
 
     if (!lesson) {
       return res.status(404).json({ message: 'Pelajaran tidak ditemukan' });
@@ -42,15 +42,15 @@ router.get('/:id', auth, async (req, res) => {
     // Check if user is enrolled in the course
     const course = await Course.findById(lesson.course._id);
     const isEnrolled = course.enrolledStudents.includes(req.user._id);
-    const isInstructor = course.instructor.toString() === req.user._id.toString();
+    const isMentor = course.mentor.toString() === req.user._id.toString();
     const isAdmin = req.user.role === 'admin';
 
-    if (!isEnrolled && !isInstructor && !isAdmin) {
+    if (!isEnrolled && !isMentor && !isAdmin) {
       return res.status(403).json({ message: 'Anda harus terdaftar di kursus ini untuk melihat pelajaran' });
     }
 
-    // Remove quiz answers if not instructor/admin
-    if (!isInstructor && !isAdmin) {
+    // Remove quiz answers if not mentor/admin
+if (!isMentor && !isAdmin) {
       lesson.quiz.questions = lesson.quiz.questions.map(q => ({
         question: q.question,
         options: q.options
@@ -64,7 +64,7 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-// Create lesson (instructor only)
+// Create lesson (mentor only)
 router.post('/', auth, authorize('mentor', 'admin'), [
   body('title').trim().isLength({ min: 3, max: 100 }).withMessage('Judul harus 3-100 karakter'),
   body('description').optional().trim().isLength({ max: 500 }).withMessage('Deskripsi maksimal 500 karakter'),
@@ -87,8 +87,9 @@ router.post('/', auth, authorize('mentor', 'admin'), [
       return res.status(404).json({ message: 'Kursus tidak ditemukan' });
     }
 
-    // Check if user is the instructor or admin
-    if (course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    // Check if user is the mentor or admin
+    // Check if user is the mentor or admin
+if (course.mentor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Anda tidak memiliki izin untuk menambah pelajaran di kursus ini' });
     }
 
@@ -117,7 +118,7 @@ router.post('/', auth, authorize('mentor', 'admin'), [
   }
 });
 
-// Update lesson (instructor only)
+// Update lesson (mentor only)
 router.put('/:id', auth, [
   body('title').optional().trim().isLength({ min: 3, max: 100 }).withMessage('Judul harus 3-100 karakter'),
   body('description').optional().trim().isLength({ max: 500 }).withMessage('Deskripsi maksimal 500 karakter'),
@@ -139,8 +140,8 @@ router.put('/:id', auth, [
       return res.status(404).json({ message: 'Pelajaran tidak ditemukan' });
     }
 
-    // Check if user is the instructor or admin
-    if (lesson.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    // Check if user is the mentor or admin
+    if (lesson.course.mentor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Anda tidak memiliki izin untuk mengedit pelajaran ini' });
     }
 
@@ -165,7 +166,7 @@ router.put('/:id', auth, [
   }
 });
 
-// Delete lesson (instructor only)
+// Delete lesson (mentor only)
 router.delete('/:id', auth, async (req, res) => {
   try {
     const lesson = await Lesson.findById(req.params.id).populate('course');
@@ -173,8 +174,8 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(404).json({ message: 'Pelajaran tidak ditemukan' });
     }
 
-    // Check if user is the instructor or admin
-    if (lesson.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    // Check if user is the mentor or admin
+    if (lesson.course.mentor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Anda tidak memiliki izin untuk menghapus pelajaran ini' });
     }
 
@@ -329,8 +330,8 @@ router.post('/:id/attachments', auth, authorize('mentor', 'admin'), async (req, 
       return res.status(404).json({ message: 'Pelajaran tidak ditemukan' });
     }
 
-    // Check if user is the instructor or admin
-    if (lesson.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    // Check if user is the mentor or admin
+    if (lesson.course.mentor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Anda tidak memiliki izin untuk mengedit pelajaran ini' });
     }
 
@@ -358,8 +359,8 @@ router.delete('/:id/attachments/:filename', auth, authorize('mentor', 'admin'), 
       return res.status(404).json({ message: 'Pelajaran tidak ditemukan' });
     }
 
-    // Check if user is the instructor or admin
-    if (lesson.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    // Check if user is the mentor or admin
+    if (lesson.course.mentor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Anda tidak memiliki izin untuk mengedit pelajaran ini' });
     }
 
@@ -396,8 +397,8 @@ router.put('/:id/attachments', auth, authorize('mentor', 'admin'), async (req, r
       return res.status(404).json({ message: 'Pelajaran tidak ditemukan' });
     }
 
-    // Check if user is the instructor or admin
-    if (lesson.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    // Check if user is the mentor or admin
+    if (lesson.course.mentor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Anda tidak memiliki izin untuk mengedit pelajaran ini' });
     }
 

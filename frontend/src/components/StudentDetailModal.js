@@ -1,176 +1,186 @@
-import React, { useState } from 'react';
-import { X, CheckCircle, XCircle, Clock, Mail, Calendar, BookOpen, Star, TrendingUp } from 'lucide-react';
-import { getStatusColor, getStatusIcon, getStatusBadgeColor, formatDate } from '../utils/statusUtils';
+import React, { useState, useEffect } from 'react';
+import { X, BookOpen, UserPlus, Trash2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { userAPI, courseAPI } from '../utils/api';
 
-export default function StudentDetailModal({ student, isOpen, onClose, onApprove, onReject }) {
-  const [loading, setLoading] = useState(false);
+const StudentDetailModal = ({ isOpen, onClose, studentId }) => {
+  const [student, setStudent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [courses, setCourses] = useState([]); // All courses for assignment dropdown
+  const [selectedCourse, setSelectedCourse] = useState('');
+  const [assigning, setAssigning] = useState(false);
 
-  if (!isOpen || !student) return null;
+  useEffect(() => {
+    if (isOpen && studentId) {
+      console.log('StudentDetailModal: Opening for studentId', studentId);
+      fetchStudentDetails();
+      fetchAllCourses();
+    }
+  }, [isOpen, studentId]);
 
-  const handleApprove = async (courseId) => {
-    setLoading(true);
+  const fetchStudentDetails = async () => {
     try {
-      await onApprove(courseId);
+      setLoading(true);
+      const data = await userAPI.getStudentById(studentId); // Assuming this endpoint returns student with enrollments
+      console.log('StudentDetailModal: Student details fetched:', data);
+      setStudent(data);
     } catch (error) {
-      console.error('Error approving enrollment:', error);
+      console.error('StudentDetailModal: Error fetching student details:', error);
+      toast.error('Gagal mengambil detail siswa.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleReject = async (courseId) => {
-    setLoading(true);
+  const fetchAllCourses = async () => {
     try {
-      await onReject(courseId);
+      const response = await courseAPI.getAll({ limit: 1000 }); // Fetch all courses, adjust limit as needed
+      setCourses(response.courses);
     } catch (error) {
-      console.error('Error rejecting enrollment:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error fetching courses:', error);
+      toast.error('Gagal mengambil daftar kursus.');
     }
   };
+
+  const handleAssignCourse = async () => {
+    if (!selectedCourse) {
+      toast.error('Pilih kursus terlebih dahulu.');
+      return;
+    }
+    setAssigning(true);
+    try {
+      await courseAPI.assignStudentToCourse(selectedCourse, studentId);
+      toast.success('Siswa berhasil ditetapkan ke kursus!');
+      setSelectedCourse('');
+      fetchStudentDetails(); // Refresh student details including enrollments
+    } catch (error) {
+      console.error('Error assigning course:', error);
+      toast.error(error.response?.data?.message || 'Gagal menetapkan kursus.');
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  const handleUnassignCourse = async (courseIdToUnassign, courseTitle, progress) => {
+    if (progress > 0) {
+      const confirmUnassign = window.confirm(
+        `Siswa memiliki progres ${progress}% di kursus ${courseTitle}. Membatalkan penetapan akan menghapus progres ini. Lanjutkan?`
+      );
+      if (!confirmUnassign) {
+        return;
+      }
+    }
+
+    try {
+      await courseAPI.unassignStudentFromCourse(courseIdToUnassign, studentId);
+      toast.success(`Siswa berhasil dibatalkan penetapannya dari ${courseTitle}.`);
+      fetchStudentDetails(); // Refresh student details including enrollments
+    } catch (error) {
+      console.error('Error unassigning course:', error);
+      toast.error(error.response?.data?.message || 'Gagal membatalkan penetapan kursus.');
+    }
+  };
+
+  if (!isOpen) return null;
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Memuat detail siswa...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!student) {
+    return (
+      <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+          <div className="flex justify-end">
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700"><X className="h-6 w-6" /></button>
+          </div>
+          <p className="text-center text-gray-600">Detail siswa tidak ditemukan.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-700 flex items-center justify-between">
-          <div className="flex items-center">
-            <img
-              src={student.avatar}
-              alt={student.name}
-              className="w-16 h-16 rounded-full object-cover mr-4"
-            />
-            <div>
-              <h2 className="text-2xl font-bold text-white">{student.name}</h2>
-              <div className="flex items-center text-gray-400">
-                <Mail className="h-4 w-4 mr-2" />
-                {student.email}
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
-          >
+    <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center p-5 border-b border-gray-200">
+          <h2 className="text-2xl font-bold text-gray-800">Detail Siswa: {student.name}</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <X className="h-6 w-6" />
           </button>
         </div>
+        <div className="p-5 space-y-6">
+          {/* Student Info */}
+          <div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-3">Informasi Pribadi</h3>
+            <p className="text-gray-600"><strong>Nama:</strong> {student.name}</p>
+            <p className="text-gray-600"><strong>Email:</strong> {student.email}</p>
+            <p className="text-gray-600"><strong>Role:</strong> {student.role}</p>
+          </div>
 
-        {/* Student Stats */}
-        <div className="p-6 border-b border-gray-700">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-white">{student.totalCourses}</div>
-              <div className="text-sm text-gray-400">Total Courses</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-400">{student.completedCourses}</div>
-              <div className="text-sm text-gray-400">Completed</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-400">{student.averageScore}%</div>
-              <div className="text-sm text-gray-400">Avg Score</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-400">
-                {new Date(student.joinDate).toLocaleDateString()}
-              </div>
-              <div className="text-sm text-gray-400">Joined</div>
+          {/* Assign Course */}
+          <div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-3">Tetapkan ke Kursus</h3>
+            <div className="flex space-x-2">
+              <select
+                className="flex-grow px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={selectedCourse}
+                onChange={(e) => setSelectedCourse(e.target.value)}
+              >
+                <option value="">Pilih Kursus</option>
+                {courses.map(course => (
+                  <option key={course._id} value={course._id}>{course.title}</option>
+                ))}
+              </select>
+              <button
+                onClick={handleAssignCourse}
+                disabled={!selectedCourse || assigning}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {assigning ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                ) : (
+                  <UserPlus className="h-5 w-5" />
+                )}
+              </button>
             </div>
           </div>
-        </div>
 
-        {/* Enrolled Courses */}
-        <div className="p-6">
-          <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
-            <BookOpen className="h-5 w-5 mr-2" />
-            Enrolled Courses ({student.enrolledCourses.length})
-          </h3>
-          
-          <div className="space-y-4">
-            {student.enrolledCourses.map((course) => (
-              <div key={course.courseId} className="bg-gray-700 rounded-lg p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <h4 className="text-lg font-semibold text-white mb-1">
-                      {course.courseTitle}
-                    </h4>
-                    <div className="flex items-center gap-4 text-sm text-gray-400">
-                      <span>Progress: {course.progress}%</span>
-                      <span>{course.completedLessons}/{course.totalLessons} lessons</span>
-                      <span>Requested: {formatDate(course.enrollmentDate)}</span>
+          {/* Enrolled Courses */}
+          <div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-3">Kursus Terdaftar</h3>
+            {student.enrollments && student.enrollments.length > 0 ? (
+              <div className="space-y-3">
+                {student.enrollments.map(enrollment => (
+                  <div key={enrollment._id} className="flex items-center justify-between p-3 bg-gray-100 rounded-lg border border-gray-200">
+                    <div>
+                      <p className="font-medium text-gray-800">{enrollment.course?.title}</p>
+                      <p className="text-sm text-gray-600">Status: {enrollment.status} | Progres: {enrollment.progress}%</p>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(course.enrollmentStatus)}
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(course.enrollmentStatus)}`}>
-                      {course.enrollmentStatus}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Progress Bar */}
-                {course.enrollmentStatus === 'approved' && (
-                  <div className="mb-3">
-                    <div className="w-full bg-gray-600 rounded-full h-3">
-                      <div 
-                        className="bg-blue-500 h-3 rounded-full transition-all duration-300"
-                        style={{ width: `${course.progress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Action Buttons */}
-                {course.enrollmentStatus === 'pending' && (
-                  <div className="flex items-center gap-3">
                     <button
-                      onClick={() => handleApprove(course.courseId)}
-                      disabled={loading}
-                      className="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-lg transition-colors"
+                      onClick={() => handleUnassignCourse(enrollment.course._id, enrollment.course.title, enrollment.progress)}
+                      className="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                     >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      {loading ? 'Processing...' : 'Approve'}
-                    </button>
-                    <button
-                      onClick={() => handleReject(course.courseId)}
-                      disabled={loading}
-                      className="flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white rounded-lg transition-colors"
-                    >
-                      <XCircle className="h-4 w-4 mr-2" />
-                      {loading ? 'Processing...' : 'Reject'}
+                      <Trash2 className="h-5 w-5" />
                     </button>
                   </div>
-                )}
-
-                {/* Status Messages */}
-                {course.enrollmentStatus === 'approved' && (
-                  <div className="flex items-center text-green-400 text-sm">
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Student can access this course
-                  </div>
-                )}
-                {course.enrollmentStatus === 'rejected' && (
-                  <div className="flex items-center text-red-400 text-sm">
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Enrollment request was rejected
-                  </div>
-                )}
+                ))}
               </div>
-            ))}
+            ) : (
+              <p className="text-gray-600">Siswa ini belum terdaftar di kursus manapun.</p>
+            )}
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="p-6 border-t border-gray-700 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
-          >
-            Close
-          </button>
         </div>
       </div>
     </div>
   );
-} 
+};
+
+export default StudentDetailModal;

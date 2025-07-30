@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { courseAPI } from '../utils/api';
 import { toast } from 'react-hot-toast';
+import AssignStudentModal from '../components/AssignStudentModal';
 
 export default function CourseDetail() {
   const { id } = useParams();
@@ -34,6 +35,7 @@ export default function CourseDetail() {
   const [enrollmentsLoading, setEnrollmentsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [completedLessons, setCompletedLessons] = useState(0);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
 
   useEffect(() => {
     fetchCourseData();
@@ -499,8 +501,29 @@ export default function CourseDetail() {
     try {
       await courseAPI.updateEnrollmentStatus(enrollmentId, status);
       await fetchEnrollments();
+      toast.success('Status enrollment berhasil diperbarui.');
     } catch (err) {
-      alert(err?.response?.data?.message || 'Gagal update status.');
+      toast.error(err?.response?.data?.message || 'Gagal update status.');
+    }
+  };
+
+  const handleUnassignStudent = async (studentId, studentName, progress) => {
+    if (progress > 0) {
+      const confirmUnassign = window.confirm(
+        `Siswa ${studentName} memiliki progres ${progress}%. Membatalkan penetapan akan menghapus progres ini. Lanjutkan?`
+      );
+      if (!confirmUnassign) {
+        return;
+      }
+    }
+
+    try {
+      await courseAPI.unassignStudentFromCourse(id, studentId);
+      toast.success(`${studentName} berhasil dibatalkan penetapannya dari kursus.`);
+      await fetchEnrollments(); // Refresh the list
+    } catch (error) {
+      console.error('Error unassigning student:', error);
+      toast.error(error.response?.data?.message || 'Gagal membatalkan penetapan siswa.');
     }
   };
 
@@ -811,6 +834,12 @@ export default function CourseDetail() {
         {hasRole && (hasRole('admin') || hasRole('mentor')) && (
           <div className="mt-8">
             <h2 className="text-xl font-bold text-white mb-4">Daftar Pendaftar</h2>
+            <button
+              onClick={() => setIsAssignModalOpen(true)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg mb-4"
+            >
+              Tetapkan Siswa Manual
+            </button>
             {enrollmentsLoading ? (
               <div className="text-gray-400">Loading...</div>
             ) : enrollments.length === 0 ? (
@@ -822,6 +851,7 @@ export default function CourseDetail() {
                     <th className="py-2 px-4">Nama</th>
                     <th className="py-2 px-4">Email</th>
                     <th className="py-2 px-4">Status</th>
+                    <th className="py-2 px-4">Progres</th>
                     <th className="py-2 px-4">Aksi</th>
                   </tr>
                 </thead>
@@ -835,6 +865,7 @@ export default function CourseDetail() {
                         {enr.status === 'approved' && <span className="px-2 py-1 bg-green-600 text-white rounded-full">Approved</span>}
                         {enr.status === 'rejected' && <span className="px-2 py-1 bg-red-600 text-white rounded-full">Rejected</span>}
                       </td>
+                      <td className="py-2 px-4">{enr.progress}%</td>
                       <td className="py-2 px-4 space-x-2">
                         <button
                           className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded"
@@ -857,6 +888,12 @@ export default function CourseDetail() {
                         >
                           Pending
                         </button>
+                        <button
+                          className="px-2 py-1 bg-red-800 hover:bg-red-900 text-white rounded"
+                          onClick={() => handleUnassignStudent(enr.student._id, enr.student.name, enr.progress)}
+                        >
+                          Batalkan Penetapan
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -866,6 +903,12 @@ export default function CourseDetail() {
           </div>
         )}
       </div>
+      <AssignStudentModal
+        isOpen={isAssignModalOpen}
+        onClose={() => setIsAssignModalOpen(false)}
+        courseId={id}
+        onStudentAssigned={fetchEnrollments}
+      />
     </div>
   );
 } 

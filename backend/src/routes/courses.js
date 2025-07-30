@@ -254,6 +254,102 @@ router.post('/:id/enroll', auth, async (req, res) => {
   }
 });
 
+// Assign student to course (admin/mentor only)
+router.post('/:courseId/assign-student', auth, authorize('admin', 'mentor'), async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { studentId } = req.body;
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: 'Kursus tidak ditemukan' });
+    }
+
+    // Mentor can only assign students to their own courses
+    if (req.user.role === 'mentor' && course.mentor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Anda tidak memiliki izin untuk menetapkan siswa ke kursus ini' });
+    }
+
+    const student = await User.findById(studentId);
+    if (!student || student.role !== 'student') {
+      return res.status(404).json({ message: 'Siswa tidak ditemukan' });
+    }
+
+    // Check if already enrolled
+    const existingEnrollment = await Enrollment.findOne({ student: studentId, course: courseId });
+    if (existingEnrollment) {
+      return res.status(400).json({ message: 'Siswa sudah terdaftar di kursus ini' });
+    }
+
+    const enrollment = new Enrollment({
+      student: studentId,
+      course: courseId,
+      status: 'approved',
+      totalLessons: Array.isArray(course.lessons) ? course.lessons.length : 0
+    });
+    await enrollment.save();
+
+    // Add student to course's enrolledStudents array
+    await Course.findByIdAndUpdate(courseId, {
+      $addToSet: { enrolledStudents: studentId }
+    });
+
+    // Add course to student's enrolledCourses array
+    await User.findByIdAndUpdate(studentId, {
+      $addToSet: { enrolledCourses: courseId }
+    });
+
+    res.status(201).json({ message: 'Siswa berhasil ditetapkan ke kursus', enrollment });
+  } catch (error) {
+    console.error('Assign student to course error:', error);
+    res.status(500).json({ message: 'Error server' });
+  }
+});
+
+// Unassign student from course (admin/mentor only)
+router.delete('/:courseId/unassign-student/:studentId', auth, authorize('admin', 'mentor'), async (req, res) => {
+  try {
+    const { courseId, studentId } = req.params;
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: 'Kursus tidak ditemukan' });
+    }
+
+    // Mentor can only unassign students from their own courses
+    if (req.user.role === 'mentor' && course.mentor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Anda tidak memiliki izin untuk membatalkan penetapan siswa dari kursus ini' });
+    }
+
+    const enrollment = await Enrollment.findOne({ student: studentId, course: courseId });
+    if (!enrollment) {
+      return res.status(404).json({ message: 'Pendaftaran tidak ditemukan' });
+    }
+
+    // Check student progress
+    if (enrollment.progress > 0) {
+      return res.status(400).json({ message: `Siswa memiliki progres ${enrollment.progress}%. Batalkan penetapan akan menghapus progres.` });
+    }
+
+    await Enrollment.deleteOne({ _id: enrollment._id });
+
+    // Remove student from course's enrolledStudents array
+    await Course.findByIdAndUpdate(courseId, {
+      $pull: { enrolledStudents: studentId }
+    });
+
+    // Remove course from student's enrolledCourses array
+    await User.findByIdAndUpdate(studentId, {
+      $pull: { enrolledCourses: courseId }
+    });
+
+    res.json({ message: 'Siswa berhasil dibatalkan penetapannya dari kursus' });
+  } catch (error) {
+    console.error('Unassign student from course error:', error);
+    res.status(500).json({ message: 'Error server' });
+  }
+});
+
 // Unenroll from course
 router.post('/:id/unenroll', auth, async (req, res) => {
   try {

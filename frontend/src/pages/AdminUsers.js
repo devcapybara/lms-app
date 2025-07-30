@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users as UsersIcon, Plus, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { userAPI } from '../utils/userAPI';
+import StudentDetailModal from '../components/StudentDetailModal';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -15,6 +16,8 @@ export default function AdminUsers() {
     password: '',
     role: 'student'
   });
+  const [showStudentDetailModal, setShowStudentDetailModal] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState(null);
 
   useEffect(() => {
     fetchUsers();
@@ -176,6 +179,17 @@ export default function AdminUsers() {
                         <option value="mentor">Mentor</option>
                         <option value="admin">Admin</option>
                       </select>
+                      {user.role === 'student' && (
+                        <button
+                          onClick={() => {
+                            setSelectedStudentId(user._id);
+                            setShowStudentDetailModal(true);
+                          }}
+                          className="ml-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs"
+                        >
+                          View Details
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -260,6 +274,15 @@ export default function AdminUsers() {
               </form>
             </div>
           </div>
+        )}
+
+        {/* Student Detail Modal */}
+        {showStudentDetailModal && (
+          <StudentDetailModal
+            isOpen={showStudentDetailModal}
+            onClose={() => setShowStudentDetailModal(false)}
+            studentId={selectedStudentId}
+          />
         )}
       </div>
     </div>

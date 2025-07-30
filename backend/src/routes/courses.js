@@ -97,6 +97,7 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Kursus tidak ditemukan' });
     }
 
+    console.log('Course data returned by /courses/:id:', course);
     res.json(course);
   } catch (error) {
     console.error('Get course error:', error);

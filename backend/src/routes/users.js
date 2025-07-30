@@ -236,7 +236,7 @@ router.get('/dashboard-stats', auth, async (req, res) => {
 
       // Calculate total lessons across all courses
       const courses = await Course.find();
-      const totalLessons = mentorCourses.reduce((sum, course) => sum + (course.lessons?.length || 0), 0);
+      const totalLessons = courses.reduce((sum, course) => sum + (course.lessons?.length || 0), 0);
       
       // Calculate completed lessons (this is a simplified calculation)
       const completedLessons = Math.floor(totalLessons * 0.7); // Assuming 70% completion rate

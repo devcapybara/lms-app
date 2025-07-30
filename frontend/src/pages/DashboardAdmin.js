@@ -48,14 +48,6 @@ export default function DashboardAdmin() {
       setStats(mappedStats);
     } catch (error) {
       console.error('Dashboard stats error in component:', error);
-      setStats({
-        totalCourses: 5,
-        totalStudents: 24,
-        totalLessons: 18,
-        completedLessons: 12,
-        pendingEnrollments: 8,
-        averageCompletion: 85
-      });
     } finally {
       setLoading(false);
     }

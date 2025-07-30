@@ -14,6 +14,7 @@ import {
   Shield
 } from 'lucide-react';
 import { courseAPI } from '../utils/api';
+import { toast } from 'react-hot-toast';
 
 export default function CourseDetail() {
   const { id } = useParams();
@@ -41,31 +42,35 @@ export default function CourseDetail() {
     if (hasRole && (hasRole('admin') || hasRole('mentor'))) {
       fetchEnrollments();
     }
+  }, [id, user]); // Add user to dependency array to re-fetch when user changes
+
+  useEffect(() => {
     if (enrollment) {
       setProgress(enrollment.progress || 0);
       setCompletedLessons(enrollment.completedLessons || 0);
     }
-  }, [id]);
+  }, [enrollment]);
 
   const fetchCourseData = async () => {
     try {
       setLoading(true);
-      // Mock course data
+      const response = await courseAPI.getById(id);
+      setCourse(response.data);
+    } catch (error) {
+      console.error('Error fetching course:', error);
+      toast.error('Gagal mengambil data kursus.');
+      // Fallback to mock data if API call fails (for development/testing)
       setCourse({
         _id: id,
         title: 'Meta Ads Mastery',
         description: 'Pelajari strategi lengkap untuk mengoptimalkan iklan Facebook dan Instagram.',
         category: 'Digital Marketing',
-        mentor: 'Ahmad Digital',
+        mentor: { name: 'Ahmad Digital', role: 'mentor' },
         duration: '8 jam',
-        lessons: 3,
         students: 156,
         rating: 4.8,
         price: 299000,
-        image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=250&fit=crop',
-        isEnrolled: false,
-        enrollmentStatus: 'pending',
-        enrollmentDate: '2024-01-20',
+        isPublished: false, // Default for mock data
         lessons: [
           {
             _id: '1',
@@ -153,8 +158,6 @@ export default function CourseDetail() {
           }
         ]
       });
-    } catch (error) {
-      console.error('Error fetching course:', error);
     } finally {
       setLoading(false);
     }
@@ -189,11 +192,23 @@ export default function CourseDetail() {
   };
 
   const canAccessCourse = () => {
-    return course.isEnrolled && course.enrollmentStatus === 'approved';
+    // Course is accessible if it's published AND (user is admin/mentor OR (user is student AND enrollment is approved))
+    if (!course || !course.isPublished) return false; // Course must be published
+
+    if (user && (user.role === 'admin' || user.role === 'mentor')) return true; // Admin/Mentor always have full access to published courses
+
+    // For students, check enrollment status
+    return enrollment && enrollment.status === 'approved';
   };
 
   const isPreviewMode = () => {
-    return !canAccessCourse();
+    // Preview mode if course is not published OR (user is student AND enrollment is not approved)
+    if (!course || !course.isPublished) return true; // Always preview if not published
+
+    if (user && (user.role === 'admin' || user.role === 'mentor')) return false; // Admin/Mentor are never in preview mode for published courses
+
+    // For students, it's preview mode if not enrolled or enrollment is not approved
+    return !enrollment || enrollment.status !== 'approved';
   };
 
   const getEnrollmentStatusText = () => {
@@ -418,6 +433,27 @@ export default function CourseDetail() {
   const renderCurrentContent = () => {
     if (!course) return null;
     
+    // If not accessible, always show locked content
+    if (!canAccessCourse()) {
+      return (
+        <div className="bg-gray-800 rounded-lg p-6">
+          <div className="text-center">
+            <Lock className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-300 mb-2">Content Locked</h3>
+            <p className="text-gray-500 mb-4">
+              This course is not accessible. It might be unpublished or your enrollment is not yet approved.
+            </p>
+            <div className="space-y-2 text-sm text-gray-400">
+              <p>• Pre-test questions</p>
+              <p>• Video lessons</p>
+              <p>• Post-test assessments</p>
+              <p>• Progress tracking</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     switch (currentStep) {
       case 'pre-test':
         return renderTest('preTest');
@@ -468,7 +504,7 @@ export default function CourseDetail() {
     }
   };
 
-  if (loading) {
+  if (loading || enrollmentLoading) { // Include enrollmentLoading in overall loading state
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>

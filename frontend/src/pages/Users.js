@@ -255,11 +255,9 @@ export default function Users() {
 
         {/* Student Detail Modal */}
         <StudentDetailModal
-          student={selectedStudent}
+          studentId={selectedStudent?._id}
           isOpen={isModalOpen}
           onClose={handleCloseModal}
-          onApprove={handleApproveEnrollment}
-          onReject={handleRejectEnrollment}
         />
       </div>
     </div>
